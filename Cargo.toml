@@ -1,0 +1,31 @@
+[package]
+authors = ["Arnau Siches"]
+description = "Something to manage “some” collections"
+edition = "2018"
+license = "MIT OR Apache-2.0"
+name = "some-thing"
+repository = "https://github.com/arnau/some-thing"
+version = "0.1.0"
+
+[[bin]]
+path = "src/main.rs"
+name = "some"
+
+[lib]
+path = "src/lib.rs"
+name = "some"
+
+
+[dependencies]
+chrono = { version = "0.4", features = ["serde"] }
+clap = "=3.0.0-beta.2"
+csv = "1.1"
+dialoguer = "0.6"
+indicatif = "0.15"
+pulldown-cmark = { version = "0.8", default-features = false }
+rusqlite = { version = "0.24", features = ["bundled"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+toml = "0.5"
+url = "2.1"
