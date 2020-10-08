@@ -20,12 +20,14 @@ name = "some"
 chrono = { version = "0.4", features = ["serde"] }
 clap = "=3.0.0-beta.2"
 csv = "1.1"
-dialoguer = "0.6"
+directories = "3.0"
 indicatif = "0.15"
 pulldown-cmark = { version = "0.8", default-features = false }
 rusqlite = { version = "0.24", features = ["bundled"] }
+rustyline = "6.3"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+skim = "0.8"
 thiserror = "1.0"
 toml = "0.5"
 url = "2.1"
