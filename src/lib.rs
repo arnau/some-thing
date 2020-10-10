@@ -1,4 +1,3 @@
-use crate::thing::NewThingError;
 use chrono::format::ParseError as ChronoError;
 use csv;
 use rusqlite;
@@ -15,6 +14,8 @@ pub mod lenses;
 pub mod store;
 pub mod tag;
 pub mod thing;
+
+use thing::NewThingError;
 
 pub type Result<T> = std::result::Result<T, SomeError>;
 
@@ -76,6 +77,8 @@ pub enum SomeError {
     Serde(String),
     #[error("readline")]
     Readline(#[from] ReadlineError),
+    #[error("reqwest")]
+    Fetch(#[from] reqwest::Error),
 }
 
 impl ser::Error for SomeError {

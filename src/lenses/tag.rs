@@ -41,3 +41,17 @@ impl TagSet {
         rx_item
     }
 }
+
+impl From<TagSet> for SkimItemReceiver {
+    fn from(input: TagSet) -> SkimItemReceiver {
+        let (tx_item, rx_item): (SkimItemSender, SkimItemReceiver) = unbounded();
+
+        for tag in input {
+            let _ = tx_item.send(Arc::new(tag));
+        }
+
+        drop(tx_item);
+
+        rx_item
+    }
+}

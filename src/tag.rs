@@ -1,4 +1,5 @@
 use std::fmt;
+use std::iter::FromIterator;
 
 pub type Icon = Vec<u8>;
 pub type TagId = String;
@@ -45,7 +46,7 @@ impl fmt::Display for Tag {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TagSet(Vec<Tag>);
 
 impl TagSet {
@@ -59,6 +60,35 @@ impl TagSet {
 
     pub fn to_vec(&self) -> Vec<Tag> {
         self.0.clone()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn first(&self) -> Option<&Tag> {
+        self.0.first()
+    }
+}
+
+impl IntoIterator for TagSet {
+    type Item = Tag;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.0.into_iter()
+    }
+}
+
+impl FromIterator<Tag> for TagSet {
+    fn from_iter<I: IntoIterator<Item = Tag>>(iter: I) -> Self {
+        let mut v = Vec::new();
+
+        for item in iter {
+            v.push(item);
+        }
+
+        TagSet::new(v)
     }
 }
 
