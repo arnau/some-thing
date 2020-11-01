@@ -1,6 +1,42 @@
+use crate::tag::TagId;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
 use std::{fmt, io};
+
+#[derive(Debug)]
+pub struct Thing {
+    url: String,
+    name: String,
+    tags: Vec<TagId>,
+    summary: Option<String>,
+}
+
+impl Thing {
+    pub fn new(url: String, name: String, tags: Vec<TagId>, summary: Option<String>) -> Self {
+        Self {
+            url,
+            name,
+            tags,
+            summary,
+        }
+    }
+
+    pub fn url(&self) -> &str {
+        &self.url
+    }
+
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn tags(&self) -> &Vec<TagId> {
+        &self.tags
+    }
+
+    pub fn summary(&self) -> Option<&String> {
+        self.summary.as_ref()
+    }
+}
 
 #[derive(Debug)]
 pub struct NewThing {

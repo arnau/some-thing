@@ -5,6 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 
 pub mod add;
+pub mod build;
 
 use crate::{Result, SomeError};
 

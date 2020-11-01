@@ -5,6 +5,7 @@ use some::cli;
 enum Subcommand {
     #[clap(alias = "a")]
     Add(cli::add::Cmd),
+    Build(cli::build::Cmd),
 }
 
 #[derive(Debug, Clap)]
@@ -19,6 +20,14 @@ fn main() {
 
     match cli.subcommand {
         Subcommand::Add(cmd) => match cmd.run() {
+            Ok(msg) => {
+                println!("{}", msg);
+            }
+            Err(err) => {
+                eprintln!("{:?}", err);
+            }
+        },
+        Subcommand::Build(cmd) => match cmd.run() {
             Ok(msg) => {
                 println!("{}", msg);
             }
