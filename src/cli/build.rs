@@ -49,7 +49,7 @@ fn process<W: Write>(tx: &Transaction, writer: &mut W) -> Result<()> {
             }
 
             writeln!(writer, "| name | summary | tags |")?;
-            writeln!(writer, "|-|-|-|")?;
+            writeln!(writer, "| - | - | - |")?;
 
             for thing in things {
                 let link = format!("[{}]({})", &thing.name(), &thing.url());
