@@ -1,13 +1,13 @@
 use rusqlite::Transaction;
 use skim::prelude::*;
 
-use crate::store::TagStore;
+use crate::store::{Store, TagStore};
 use crate::tag::{Tag, TagSet};
 use crate::Result;
 
 /// The full set of tags in the store.
-pub fn full_set(tx: &Transaction) -> Result<TagSet> {
-    Ok(TagStore::get_all(tx)?)
+pub fn full_set(store: &mut Store) -> Result<TagSet> {
+    Ok(TagStore::get_all(store)?)
 }
 
 impl SkimItem for Tag {

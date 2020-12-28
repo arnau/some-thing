@@ -1,10 +1,10 @@
-use rusqlite::{Connection, ToSql, Transaction, NO_PARAMS};
+use rusqlite::{Connection, MappedRows, Row, ToSql, Transaction, NO_PARAMS};
 use std::include_str;
 use std::path::{Path, PathBuf};
 
 use crate::tag::{Tag, TagSet};
 use crate::thing::NewThing;
-use crate::Result;
+use crate::{Result, SomeError};
 
 pub static DEFAULT_PATH: &str = "./some.db";
 pub static SCHEMA: &str = include_str!("./sql/bootstrap.sql");
@@ -41,13 +41,34 @@ impl Store {
 
         Ok(())
     }
+
+    /// A query mapped over the given function.
+    pub fn query<T, P, F>(&mut self, query: &str, params: P, f: F) -> Result<Vec<T>>
+    where
+        P: IntoIterator,
+        P::Item: ToSql,
+        F: FnMut(&Row<'_>) -> std::result::Result<T, rusqlite::Error>,
+    {
+        let mut stmt = self.conn.prepare(query)?;
+
+        let rows = stmt.query_map(params, f)?;
+
+        let mut items = Vec::new();
+        for row in rows {
+            items.push(row?);
+        }
+
+        Ok(items)
+    }
 }
 
 #[derive(Debug)]
 pub struct ThingStore;
 
 impl ThingStore {
-    pub fn write(tx: &Transaction, entity: NewThing) -> Result<()> {
+    pub fn write(store: &mut Store, entity: NewThing) -> Result<()> {
+        let mut tx = store.transaction()?;
+
         let thing: [&dyn ToSql; 4] = [
             &entity.url(),
             &entity.name(),
@@ -55,13 +76,15 @@ impl ThingStore {
             &entity.category_id(),
         ];
 
-        ThingStore::insert(tx, &thing)?;
+        ThingStore::insert(&tx, &thing)?;
 
         for tag in entity.tags() {
             let values: [&dyn ToSql; 2] = [&entity.url(), &tag];
 
-            ThingStore::insert_tag(tx, &values)?;
+            TagStore::insert(&tx, &values)?;
         }
+
+        tx.commit()?;
 
         Ok(())
     }
@@ -80,28 +103,13 @@ impl ThingStore {
 
         Ok(())
     }
-
-    pub fn insert_tag(tx: &Transaction, values: &[&dyn ToSql; 2]) -> Result<()> {
-        let mut stmt = tx.prepare(
-            r#"
-            INSERT INTO thing_tag
-                (thing_id, tag_id)
-            VALUES
-                (?, ?)
-            "#,
-        )?;
-
-        stmt.execute(values)?;
-
-        Ok(())
-    }
 }
 
 #[derive(Debug)]
 pub struct TagStore;
 
 impl TagStore {
-    pub fn re(tx: &Transaction, values: &[&dyn ToSql; 2]) -> Result<()> {
+    pub fn insert(tx: &Transaction, values: &[&dyn ToSql; 2]) -> Result<()> {
         let mut stmt = tx.prepare(
             r#"
             INSERT INTO thing_tag
@@ -116,18 +124,11 @@ impl TagStore {
         Ok(())
     }
 
-    pub fn get_all(tx: &Transaction) -> Result<TagSet> {
-        let mut stmt = tx.prepare(r#"SELECT * FROM tag ORDER BY id"#)?;
-
-        let rows = stmt.query_map(NO_PARAMS, |row| {
+    pub fn get_all(store: &mut Store) -> Result<TagSet> {
+        let rows = store.query(r#"SELECT * FROM tag ORDER BY id"#, NO_PARAMS, |row| {
             Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
         })?;
-        let mut tagset = Vec::new();
 
-        for result in rows {
-            tagset.push(result?);
-        }
-
-        Ok(TagSet::new(tagset))
+        Ok(TagSet::new(rows))
     }
 }

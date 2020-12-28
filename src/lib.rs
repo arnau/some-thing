@@ -44,7 +44,7 @@ impl fmt::Display for Report {
 pub enum SomeError {
     // Internal
     #[error("new thing error")]
-    NewThing(NewThingError),
+    NewThing(#[from] NewThingError),
     #[error("unknown {0}")]
     Unknown(String),
     #[error("url exists '{0}'")]

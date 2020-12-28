@@ -19,40 +19,30 @@ pub struct Cmd {
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
         let mut prompter = Prompter::new()?;
-
         let mut store = Store::open(&self.store_path)?;
-        let tx = store.transaction()?;
         let mut thing = NewThingBuilder::new();
 
+        // Main info
         let url = prompter.demand("url")?;
         lenses::thing::fetch_thing(&url)?;
         let name = prompter.demand("name")?;
         let summary = prompter.ask_once("summary")?;
 
-        let category_items = lenses::tag::full_set(&tx)?;
+        // Category
+        let category_items = lenses::tag::full_set(&mut store)?;
+        let default_category_id = "miscellaneous";
+        let category_id = ask_category(&mut prompter, default_category_id, category_items.clone());
 
-        let category_id = if category_items.len() == 1 {
-            category_items
-                .first()
-                .expect("always an item present")
-                .to_string()
-        } else {
-            prompter
-                .read_choice(category_items.clone(), "category")?
-                .unwrap_or("miscellaneous".into())
-        };
-
+        // Tags
         let tag_items = category_items
             .into_iter()
-            .filter(|tag| tag.id() != &category_id)
+            .filter(|tag| tag.id() != category_id)
             .collect::<TagSet>();
+        let tags = ask_tags(&mut prompter, tag_items);
 
-        let tags = if tag_items.len() == 0 {
-            Vec::new()
-        } else {
-            prompter.read_choices(tag_items, "tags")?
-        };
+        prompter.flush()?;
 
+        // Build the thing
         thing.with_url(url);
         thing.with_name(name);
         if let Some(summary) = summary {
@@ -61,13 +51,31 @@ impl Cmd {
         thing.with_category_id(category_id);
         thing.with_tags(&tags);
 
-        dbg!(&thing);
+        let report = lenses::thing::add(&mut store, thing.build()?)?;
 
-        // let report = lenses::thing::add(&tx)?;
+        Ok(report)
+    }
+}
 
-        prompter.flush()?;
-        tx.commit()?;
+/// Ask for a category or fallback to the default category.
+fn ask_category(prompter: &mut Prompter, default_id: &str, items: TagSet) -> String {
+    if items.len() == 1 {
+        items.first().expect("always an item present").to_string()
+    } else {
+        prompter
+            .read_choice(items.clone(), "category")
+            .expect("always to read a choice")
+            .unwrap_or(default_id.into())
+    }
+}
 
-        Ok(Report::new("Success"))
+/// Ask to choose zero or more tags.
+fn ask_tags(prompter: &mut Prompter, items: TagSet) -> Vec<String> {
+    if items.len() == 0 {
+        Vec::new()
+    } else {
+        prompter
+            .read_choices(items, "tags")
+            .expect("always to read a tag choice")
     }
 }

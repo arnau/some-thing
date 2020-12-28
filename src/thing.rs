@@ -1,7 +1,7 @@
 use crate::tag::TagId;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use std::{fmt, io};
+use thiserror::Error;
 
 #[derive(Debug)]
 pub struct Thing {
@@ -200,7 +200,7 @@ mod empty_string {
     }
 }
 
-#[derive(Debug)]
+#[derive(Error, Debug)]
 pub enum NewThingError {
     MissingUrl,
     MissingName,
@@ -222,8 +222,6 @@ impl fmt::Display for NewThingError {
         }
     }
 }
-
-impl Error for NewThingError {}
 
 impl From<io::Error> for NewThingError {
     fn from(err: io::Error) -> Self {

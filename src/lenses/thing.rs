@@ -1,10 +1,12 @@
 use scraper::{Html, Selector};
 use url::Url;
 
-use crate::store::Store;
-use crate::{Report, Result};
+use crate::store::{Store, ThingStore};
+use crate::{thing::NewThing, Report, Result};
 
-pub fn add(store: &Store) -> Result<Report> {
+pub fn add(store: &mut Store, thing: NewThing) -> Result<Report> {
+    ThingStore::write(store, thing)?;
+
     Ok(Report::new("Success"))
 }
 
