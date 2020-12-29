@@ -11,10 +11,12 @@ use url;
 
 pub mod cli;
 pub mod lenses;
+pub mod package;
 pub mod store;
 pub mod tag;
 pub mod thing;
 
+use package::core::PackageError;
 use thing::NewThingError;
 
 pub type Result<T> = std::result::Result<T, SomeError>;
@@ -45,6 +47,8 @@ pub enum SomeError {
     // Internal
     #[error("new thing error")]
     NewThing(#[from] NewThingError),
+    #[error(transparent)]
+    Package(#[from] PackageError),
     #[error("unknown {0}")]
     Unknown(String),
     #[error("url exists '{0}'")]
@@ -79,6 +83,8 @@ pub enum SomeError {
     Readline(#[from] ReadlineError),
     #[error("reqwest")]
     Fetch(#[from] reqwest::Error),
+    #[error("json")]
+    Json(#[from] serde_json::Error),
 }
 
 impl ser::Error for SomeError {

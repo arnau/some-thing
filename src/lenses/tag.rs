@@ -1,4 +1,3 @@
-use rusqlite::Transaction;
 use skim::prelude::*;
 
 use crate::store::{Store, TagStore};

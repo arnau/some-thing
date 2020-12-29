@@ -4,6 +4,7 @@ use some::cli;
 #[derive(Debug, Clap)]
 enum Subcommand {
     #[clap(alias = "a")]
+    Init(cli::init::Cmd),
     Add(cli::add::Cmd),
     Build(cli::build::Cmd),
 }
@@ -19,6 +20,14 @@ fn main() {
     let cli: Cli = Cli::parse();
 
     match cli.subcommand {
+        Subcommand::Init(cmd) => match cmd.run() {
+            Ok(msg) => {
+                println!("{}", msg);
+            }
+            Err(err) => {
+                eprintln!("{:?}", err);
+            }
+        },
         Subcommand::Add(cmd) => match cmd.run() {
             Ok(msg) => {
                 println!("{}", msg);

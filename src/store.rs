@@ -1,10 +1,10 @@
-use rusqlite::{Connection, MappedRows, Row, ToSql, Transaction, NO_PARAMS};
+use rusqlite::{Connection, Row, ToSql, Transaction, NO_PARAMS};
 use std::include_str;
 use std::path::{Path, PathBuf};
 
 use crate::tag::{Tag, TagSet};
 use crate::thing::NewThing;
-use crate::{Result, SomeError};
+use crate::Result;
 
 pub static DEFAULT_PATH: &str = "./some.db";
 pub static SCHEMA: &str = include_str!("./sql/bootstrap.sql");
@@ -67,7 +67,7 @@ pub struct ThingStore;
 
 impl ThingStore {
     pub fn write(store: &mut Store, entity: NewThing) -> Result<()> {
-        let mut tx = store.transaction()?;
+        let tx = store.transaction()?;
 
         let thing: [&dyn ToSql; 4] = [
             &entity.url(),

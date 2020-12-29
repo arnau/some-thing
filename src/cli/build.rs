@@ -1,5 +1,5 @@
 use clap::Clap;
-use rusqlite::{Connection, ToSql, Transaction, NO_PARAMS};
+use rusqlite::{Transaction, NO_PARAMS};
 use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;

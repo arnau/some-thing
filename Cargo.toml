@@ -33,3 +33,4 @@ skim = "0.8"
 thiserror = "1.0"
 toml = "0.5"
 url = "2.1"
+uuid = { version = "0.8.1", features = ["v4"] }

@@ -145,20 +145,6 @@ impl NewThingBuilder {
     /// Builds the actual `Record`.
     ///
     /// Notice that it consumes the builder.
-    ///
-    /// ## Examples
-    ///
-    /// ```
-    /// use curator_sketch::history::RecordBuilder;
-    ///
-    /// let b = RecordBuilder::new("https://www.seachess.net")
-    ///     .with_title("Seachess")
-    ///     .with_summary("A summary")
-    ///     .with_tags(&vec!["a", "b", "c"])
-    ///     .build();
-    ///
-    /// assert!(b.is_ok(), "Expected the record to build correctly");
-    /// ```
     pub fn build(self) -> Result<NewThing, NewThingError> {
         let record = NewThing {
             url: self.url.ok_or(NewThingError::MissingUrl)?,
