@@ -1,16 +1,21 @@
 # Some Thing
 
-`some` is a tool to manage “some” collections. 
+`some` is a tool to manage “some” collections.
 
 
 ## Why
 
-[Awesome] lists are a nice idea but consuming them is quite difficult beyond
-casual browsing. As per managing one, I haven't even tried.
+I find the [Awesome] lists quite a nice idea but managing and consuming them
+not so much beyond casual browsing.
 
-So, this tool could be focused on [Awesome] lists but their requirements are
-divergent enough from mine. And let's face it, I don't tend to awe, Finding
-something useful in a particular context is more than enough for me.
+This is an attempt to address the issue by focusing on packaging the data in a
+consumable format i.e. [Tabular Data Package] and secondarily, display it as a
+`README.md` file in a similar vein as Awesome.
+
+
+## Status
+
+This project is not yet usable. It's very much a broken sketch right now.
 
 
 ## Licence
@@ -23,6 +28,8 @@ submitted for inclusion by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
 
 
+
 [Awesome]: https://github.com/sindresorhus/awesome/
+[Tabular Data Package]: https://specs.frictionlessdata.io/tabular-data-package/
 [MIT Licence]: ./LICENCE-MIT
 [Apache Licence, Version 2.0]: ./LICENCE-APACHE

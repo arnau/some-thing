@@ -17,7 +17,7 @@ use crate::{Report, Result};
 /// This command will scaffold a new Some-flavoured [Tabular Data Package] in the current directory.
 /// Give a path as an argument to create in the given directory.
 ///
-/// [Tabular Data Package]: specs.frictionlessdata.io/tabular-data-package/
+/// [Tabular Data Package]: https://specs.frictionlessdata.io/tabular-data-package/
 #[derive(Debug, Clap)]
 pub struct Cmd {
     /// The location where to scaffold a new Some package.
