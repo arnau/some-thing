@@ -89,6 +89,10 @@ impl Package {
     pub fn name(&self) -> &Name {
         &self.name
     }
+
+    pub fn description(&self) -> &str {
+        &self.description
+    }
 }
 
 /// The main way to build a `Package`.

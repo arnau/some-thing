@@ -1,20 +1,26 @@
 use clap::Clap;
 use rusqlite::{Transaction, NO_PARAMS};
+use std::fs::File;
 use std::io;
 use std::io::prelude::*;
+use std::io::BufReader;
 use std::path::PathBuf;
 
+use crate::package::{self, Package};
 use crate::store::{Store, DEFAULT_PATH};
 use crate::tag::{Tag, TagId};
 use crate::thing::Thing;
-use crate::{Report, Result};
+use crate::{Report, Result, SomeError};
 
-/// Add a new item to the collection.
+/// Build the Markdown version of the collection.
 #[derive(Debug, Clap)]
 pub struct Cmd {
     /// Store path
     #[clap(long, value_name = "path", default_value = DEFAULT_PATH)]
     store_path: PathBuf,
+    /// The location where to find the Some package to be destroyed.
+    #[clap(default_value = ".")]
+    path: PathBuf,
 }
 
 impl Cmd {
@@ -23,7 +29,13 @@ impl Cmd {
         let tx = store.transaction()?;
         let mut writer = io::stdout();
 
-        process(&tx, &mut writer)?;
+        let full_path = &self.path.canonicalize()?;
+        let package_file = File::open(package::DESCRIPTOR_PATH)
+            .map_err(|_| SomeError::MissingPackageDescriptor(full_path.display().to_string()))?;
+        let package_reader = BufReader::new(package_file);
+        let package: Package = serde_json::from_reader(package_reader)?;
+
+        process(&tx, package, &mut writer)?;
 
         tx.commit()?;
 
@@ -31,9 +43,9 @@ impl Cmd {
     }
 }
 
-fn process<W: Write>(tx: &Transaction, writer: &mut W) -> Result<()> {
-    writeln!(writer, "# Some FIXME\n")?;
-    writeln!(writer, "Some FIXME description\n")?;
+fn process<W: Write>(tx: &Transaction, package: Package, writer: &mut W) -> Result<()> {
+    writeln!(writer, "# {}\n", package.name())?;
+    writeln!(writer, "{}\n", package.description())?;
 
     let categories = get_categories(tx)?;
 
