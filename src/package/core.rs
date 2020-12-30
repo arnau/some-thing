@@ -123,11 +123,21 @@ pub type Url = String;
 ///    title: "Open Data Commons Public Domain Dedication and License".into()
 /// };
 /// ```
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Licence {
     pub name: String,
     pub path: String,
     pub title: String,
+}
+
+impl fmt::Display for Licence {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "[{}]({})", &self.name, &self.path)
+        } else {
+            write!(f, "{}", &self.name)
+        }
+    }
 }
 
 /// Represents an individual or organisation involved in the production or delivery

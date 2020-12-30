@@ -6,6 +6,7 @@ use std::path::PathBuf;
 
 pub mod add;
 pub mod build;
+pub mod destroy;
 pub mod init;
 
 use crate::{Result, SomeError};

@@ -7,6 +7,7 @@ enum Subcommand {
     Init(cli::init::Cmd),
     Add(cli::add::Cmd),
     Build(cli::build::Cmd),
+    Destroy(cli::destroy::Cmd),
 }
 
 #[derive(Debug, Clap)]
@@ -21,6 +22,14 @@ fn main() {
 
     match cli.subcommand {
         Subcommand::Init(cmd) => match cmd.run() {
+            Ok(msg) => {
+                println!("{}", msg);
+            }
+            Err(err) => {
+                eprintln!("{:?}", err);
+            }
+        },
+        Subcommand::Destroy(cmd) => match cmd.run() {
             Ok(msg) => {
                 println!("{}", msg);
             }

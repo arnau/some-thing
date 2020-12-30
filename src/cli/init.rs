@@ -6,9 +6,10 @@ use std::str::FromStr;
 
 use super::Prompter;
 use crate::lenses;
-use crate::package::core::Name;
+use crate::lenses::licence::{fetch_licenses, LicenceSet};
+use crate::package::core::{Licence, Name};
 use crate::package::resource::Resource;
-use crate::package::{Package, PackageBuilder};
+use crate::package::{self, Package, PackageBuilder};
 use crate::{Report, Result};
 
 /// Create a new Some package in an existing directory.
@@ -37,7 +38,30 @@ impl Cmd {
         let description = prompter.demand("description")?;
         let homepage = prompter.ask_once("homepage (URL)")?;
         let resources = build_resources();
-        // let licenses: Vec<Licence>,
+        let licenses: Vec<Licence> =
+            if let Some(answer) = prompter.ask_once("do you want to add a licence? (y/N)")? {
+                if answer == "y" {
+                    let items = fetch_licenses()?;
+
+                    let choices = prompter.read_choices(
+                        items.clone().into_iter().collect::<LicenceSet>(),
+                        "licenses",
+                    )?;
+
+                    let mut result: Vec<Licence> = Vec::new();
+                    for licence in items {
+                        if choices.iter().any(|name| name == &licence.name) {
+                            result.push(licence);
+                        }
+                    }
+
+                    result
+                } else {
+                    Vec::new()
+                }
+            } else {
+                Vec::new()
+            };
         // let resources: Vec<Resource>,
         // let contributors: Vec<Contributor>,
         // let keywords: Vec<String>,
@@ -46,6 +70,7 @@ impl Cmd {
             .name(name)
             .title(title)
             .description(description)
+            .licenses(licenses)
             .resources(resources);
 
         if let Some(value) = homepage {
@@ -55,8 +80,8 @@ impl Cmd {
         let package = builder.build()?;
 
         // Write Package
-        write_package(&self.path.join("datapackage.json"), &package)?;
-        create_dir(&self.path.join("data"))?;
+        write_package(&self.path.join(package::DESCRIPTOR_PATH), &package)?;
+        create_dir(&self.path.join(package::DATA_PATH))?;
         for resource in package.resources {
             write_resource(&self.path, &resource)?;
         }

@@ -41,6 +41,16 @@ impl fmt::Display for Report {
     }
 }
 
+/// A report event.
+#[derive(Debug, Clone)]
+pub struct Event(String);
+
+impl Event {
+    pub fn new<S: Into<String>>(message: S) -> Self {
+        Self(message.into())
+    }
+}
+
 /// The main application error for some.
 #[derive(Error, Debug)]
 pub enum SomeError {
@@ -59,7 +69,10 @@ pub enum SomeError {
     FieldRequired(String),
     #[error("couldn't find the project directory")]
     ProjectDir,
-
+    #[error("{0}")]
+    SealError(String),
+    #[error("`{0}` is not a Some package.")]
+    MissingPackageDescriptor(String),
     // External
     #[error("date error")]
     Date(#[from] ChronoError),

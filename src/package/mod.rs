@@ -60,6 +60,9 @@ pub mod resource;
 use self::core::*;
 use self::resource::Resource;
 
+pub const DESCRIPTOR_PATH: &str = "datapackage.json";
+pub const DATA_PATH: &str = "data/";
+
 /// Represents a Tabular Data Package.
 ///
 /// Use either the [`PackageBuilder`] or `serde_json::from_str` to create a new `Package`.
@@ -72,14 +75,20 @@ pub struct Package {
     pub description: String,
     pub created: DateTime<Utc>,
     pub resources: Vec<Resource>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub licenses: Vec<Licence>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub homepage: Option<Url>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub contributors: Vec<Contributor>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub keywords: Vec<String>,
+}
+
+impl Package {
+    pub fn name(&self) -> &Name {
+        &self.name
+    }
 }
 
 /// The main way to build a `Package`.
