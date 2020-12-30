@@ -1,10 +1,6 @@
 use scraper::{Html, Selector};
 use url::Url;
 
-use crate::package::core::Name;
-use crate::package::resource::{
-    Constraint, Field, ForeignKey, Reference, Resource, ResourceBuilder, Schema,
-};
 use crate::store::{Store, ThingStore};
 use crate::{thing::NewThing, Report, Result};
 
@@ -42,72 +38,4 @@ pub fn fetch_thing(url: &str) -> Result<()> {
     }
 
     Ok(())
-}
-
-/// The thing resouce for the package.
-pub fn package_resource() -> Resource {
-    let schema = Schema {
-        fields: vec![
-            Field {
-                name: Name::new("url"),
-                description: "The URL of the thing.".into(),
-                datatype: "string".into(),
-                format: Some("uri".into()),
-                constraints: vec![Constraint {
-                    required: true,
-                    unique: true,
-                }],
-            },
-            Field {
-                name: Name::new("name"),
-                description: "The name of the thing.".into(),
-                datatype: "string".into(),
-                format: None,
-                constraints: vec![Constraint {
-                    required: true,
-                    unique: true,
-                }],
-            },
-            Field {
-                name: Name::new("summary"),
-                description: "The description of the thing.".into(),
-                datatype: "string".into(),
-                format: None,
-                constraints: vec![Constraint {
-                    required: false,
-                    unique: false,
-                }],
-            },
-            Field {
-                name: Name::new("category_id"),
-                description: "The category of the thing.".into(),
-                datatype: "string".into(),
-                format: None,
-                constraints: vec![Constraint {
-                    required: true,
-                    unique: false,
-                }],
-            },
-        ],
-
-        primary_key: vec![Name::new("url")],
-        foreign_keys: vec![ForeignKey {
-            fields: vec![Name::new("category_id")],
-            reference: Reference {
-                resource: Name::new("tag"),
-                fields: vec![Name::new("id")],
-            },
-        }],
-    };
-
-    let mut builder = ResourceBuilder::new();
-    builder.with_name(Name::new("thing"));
-    builder.with_title("Thing");
-    builder.with_description("The set of things for the collection.");
-    builder.with_path("data/thing.csv");
-    builder.with_schema(schema);
-
-    let resource = builder.build();
-
-    resource
 }

@@ -47,13 +47,13 @@ pub struct Field {
     pub description: String,
     #[serde(rename = "type")]
     pub datatype: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub format: Option<String>,
     pub constraints: Vec<Constraint>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Constraint {
-    //default = false
     pub required: bool,
     pub unique: bool,
 }

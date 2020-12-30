@@ -27,7 +27,6 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
-        // let path = self.path;
         let mut prompter = Prompter::new()?;
 
         // TODO: Nicely recover from a bad package name.
@@ -37,7 +36,7 @@ impl Cmd {
         let title = prompter.demand("title")?;
         let description = prompter.demand("description")?;
         let homepage = prompter.ask_once("homepage (URL)")?;
-        let resources = build_resources();
+        let resources = lenses::package::resources();
         let licenses: Vec<Licence> =
             if let Some(answer) = prompter.ask_once("do you want to add a licence? (y/N)")? {
                 if answer == "y" {
@@ -62,7 +61,6 @@ impl Cmd {
             } else {
                 Vec::new()
             };
-        // let resources: Vec<Resource>,
         // let contributors: Vec<Contributor>,
         // let keywords: Vec<String>,
 
@@ -88,7 +86,7 @@ impl Cmd {
 
         prompter.flush()?;
 
-        let report = Report::new("wip");
+        let report = Report::new("Success");
         Ok(report)
     }
 }
@@ -110,8 +108,4 @@ fn write_resource<P: AsRef<Path>>(path: P, resource: &Resource) -> Result<()> {
     wtr.flush()?;
 
     Ok(())
-}
-
-fn build_resources() -> Vec<Resource> {
-    vec![lenses::thing::package_resource()]
 }
