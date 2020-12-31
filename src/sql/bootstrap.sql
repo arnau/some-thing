@@ -10,7 +10,6 @@ CREATE TABLE IF NOT EXISTS tag (
     id      text NOT NULL,
     name    text,
     summary text,
-    icon    blob,
 
     PRIMARY KEY (id)
 );
@@ -34,6 +33,3 @@ CREATE TABLE IF NOT EXISTS thing_tag (
     FOREIGN KEY (thing_id) REFERENCES thing (url),
     FOREIGN KEY (tag_id)   REFERENCES tag (id)
 );
-
-
-INSERT OR IGNORE INTO tag VALUES ('miscellaneous', 'Miscellaneous', 'The unclassifiable.', NULL);

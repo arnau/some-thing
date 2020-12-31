@@ -1,7 +1,6 @@
 use std::fmt;
 use std::iter::FromIterator;
 
-pub type Icon = Vec<u8>;
 pub type TagId = String;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -9,22 +8,11 @@ pub struct Tag {
     id: TagId,
     name: Option<String>,
     summary: Option<String>,
-    icon: Option<Icon>,
 }
 
 impl Tag {
-    pub fn new(
-        id: TagId,
-        name: Option<String>,
-        summary: Option<String>,
-        icon: Option<Icon>,
-    ) -> Self {
-        Self {
-            id,
-            name,
-            summary,
-            icon,
-        }
+    pub fn new(id: TagId, name: Option<String>, summary: Option<String>) -> Self {
+        Self { id, name, summary }
     }
 
     pub fn id(&self) -> &str {

@@ -89,8 +89,7 @@ fn get_categories(tx: &Transaction) -> Result<Vec<Tag>> {
         SELECT DISTINCT
             tag.id,
             tag.name,
-            tag.summary,
-            tag.icon
+            tag.summary
         FROM
             thing
         JOIN
@@ -99,7 +98,7 @@ fn get_categories(tx: &Transaction) -> Result<Vec<Tag>> {
     )?;
 
     let rows = stmt.query_map(NO_PARAMS, |row| {
-        Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+        Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?))
     })?;
 
     let mut list = Vec::new();

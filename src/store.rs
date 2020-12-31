@@ -126,7 +126,7 @@ impl TagStore {
 
     pub fn get_all(store: &mut Store) -> Result<TagSet> {
         let rows = store.query(r#"SELECT * FROM tag ORDER BY id"#, NO_PARAMS, |row| {
-            Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?))
+            Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?))
         })?;
 
         Ok(TagSet::new(rows))

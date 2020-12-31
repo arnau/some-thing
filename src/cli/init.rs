@@ -104,7 +104,14 @@ fn write_resource<P: AsRef<Path>>(path: P, resource: &Resource) -> Result<()> {
     let file = File::create(path)?;
     let mut wtr = csv::Writer::from_writer(&file);
     let field_names = resource.field_names();
+
     wtr.write_record(&field_names)?;
+
+    // TODO: Find a better place for this. Some sort of `default_records` perhaps.
+    if resource.id().to_string() == "tag" {
+        wtr.write_record(&["miscellaneous", "Miscellaneous", "The unclassifiable."])?;
+    }
+
     wtr.flush()?;
 
     Ok(())

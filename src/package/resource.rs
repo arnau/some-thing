@@ -19,6 +19,10 @@ pub struct Resource {
 }
 
 impl Resource {
+    pub fn id(&self) -> &Name {
+        &self.name
+    }
+
     pub fn path(&self) -> &Path {
         &self.path
     }
