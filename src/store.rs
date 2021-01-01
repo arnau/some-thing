@@ -1,29 +1,56 @@
 use rusqlite::{Connection, Row, ToSql, Transaction, NO_PARAMS};
 use std::include_str;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
+use thiserror::Error;
 
-use crate::tag::{Tag, TagSet};
-use crate::thing::NewThing;
+use crate::tag::{Tag, TagId, TagSet};
+use crate::thing::Thing;
 use crate::Result;
 
-pub static DEFAULT_PATH: &str = "./some.db";
-pub static SCHEMA: &str = include_str!("./sql/bootstrap.sql");
+pub const DEFAULT_PATH: &str = ":memory:";
+pub const SCHEMA: &str = include_str!("./sql/bootstrap.sql");
 
 pub type Tx<'a> = Transaction<'a>;
 
+/// A strategy to connect to the storage.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Strategy {
+    Memory,
+    Disk(PathBuf),
+}
+
+impl FromStr for Strategy {
+    type Err = StoreError;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s {
+            DEFAULT_PATH => Ok(Strategy::Memory),
+            s => {
+                let path = Path::new(s);
+                Ok(Strategy::Disk(path.into()))
+            }
+        }
+    }
+}
+
 #[derive(Debug)]
 pub struct Store {
-    path: PathBuf,
+    strategy: Strategy,
     conn: Connection,
 }
 
 impl Store {
-    pub fn open<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let conn = Connection::open(&path)?;
+    pub fn open(strategy: &Strategy) -> Result<Self> {
+        let conn = match strategy {
+            Strategy::Memory => Connection::open_in_memory()?,
+            Strategy::Disk(path) => Connection::open(path)?,
+        };
+
         // conn.pragma_update(None, "journal_mode", &"wal")?;
 
         let store = Self {
-            path: path.as_ref().into(),
+            strategy: strategy.clone(),
             conn,
         };
 
@@ -66,20 +93,20 @@ impl Store {
 pub struct ThingStore;
 
 impl ThingStore {
-    pub fn write(store: &mut Store, entity: NewThing) -> Result<()> {
+    pub fn write(store: &mut Store, thing: Thing, tags: &[TagId]) -> Result<()> {
         let tx = store.transaction()?;
 
-        let thing: [&dyn ToSql; 4] = [
-            &entity.url(),
-            &entity.name(),
-            &entity.summary(),
-            &entity.category_id(),
+        let record: [&dyn ToSql; 4] = [
+            &thing.url(),
+            &thing.name(),
+            &thing.summary(),
+            &thing.category_id(),
         ];
 
-        ThingStore::insert(&tx, &thing)?;
+        ThingStore::insert(&tx, &record)?;
 
-        for tag in entity.tags() {
-            let values: [&dyn ToSql; 2] = [&entity.url(), &tag];
+        for tag in tags {
+            let values: [&dyn ToSql; 2] = [&thing.url(), &tag];
 
             TagStore::insert(&tx, &values)?;
         }
@@ -131,4 +158,31 @@ impl TagStore {
 
         Ok(TagSet::new(rows))
     }
+
+    pub fn get_by_thing(store: &mut Store, thing_id: &str) -> Result<TagSet> {
+        let rows = store.query(
+            r#"
+        SELECT
+            tag.*
+        FROM
+            thing_tag
+        JOIN
+            tag ON tag.id = thing_tag.tag_id
+        WHERE
+            thing_id = ?
+        "#,
+            &[thing_id],
+            |row| Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?)),
+        )?;
+
+        Ok(TagSet::new(rows))
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum StoreError {
+    #[error(
+        "The given strategy `{0}` is not an acceptable path nor the special `:memory:` token."
+    )]
+    StrategyError(String),
 }

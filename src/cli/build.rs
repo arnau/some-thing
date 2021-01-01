@@ -1,23 +1,21 @@
 use clap::Clap;
 use rusqlite::{Transaction, NO_PARAMS};
-use std::fs::File;
 use std::io;
 use std::io::prelude::*;
-use std::io::BufReader;
 use std::path::PathBuf;
 
-use crate::package::{self, Package};
-use crate::store::{Store, DEFAULT_PATH};
+use crate::context::Context;
+use crate::store::{Store, Strategy, DEFAULT_PATH};
 use crate::tag::{Tag, TagId};
 use crate::thing::Thing;
-use crate::{Report, Result, SomeError};
+use crate::{Report, Result};
 
 /// Build the Markdown version of the collection.
 #[derive(Debug, Clap)]
 pub struct Cmd {
-    /// Store path
+    /// The path to the cache.
     #[clap(long, value_name = "path", default_value = DEFAULT_PATH)]
-    store_path: PathBuf,
+    cache: Strategy,
     /// The location where to find the Some package to be destroyed.
     #[clap(default_value = ".")]
     path: PathBuf,
@@ -25,17 +23,13 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
-        let mut store = Store::open(&self.store_path)?;
+        let context = Context::new(&self.path)?;
+
+        let mut store = Store::open(&self.cache)?;
         let tx = store.transaction()?;
         let mut writer = io::stdout();
 
-        let full_path = &self.path.canonicalize()?;
-        let package_file = File::open(package::DESCRIPTOR_PATH)
-            .map_err(|_| SomeError::MissingPackageDescriptor(full_path.display().to_string()))?;
-        let package_reader = BufReader::new(package_file);
-        let package: Package = serde_json::from_reader(package_reader)?;
-
-        process(&tx, package, &mut writer)?;
+        process(&tx, &context, &mut writer)?;
 
         tx.commit()?;
 
@@ -43,7 +37,8 @@ impl Cmd {
     }
 }
 
-fn process<W: Write>(tx: &Transaction, package: Package, writer: &mut W) -> Result<()> {
+fn process<W: Write>(tx: &Transaction, context: &Context, writer: &mut W) -> Result<()> {
+    let package = context.package();
     writeln!(writer, "# {}\n", package.name())?;
     writeln!(writer, "{}\n", package.description())?;
 
@@ -71,7 +66,7 @@ fn process<W: Write>(tx: &Transaction, package: Package, writer: &mut W) -> Resu
                     writer,
                     "| {} | {} | {} |",
                     link,
-                    summary.unwrap_or(&"".to_string()),
+                    summary.as_ref().unwrap_or(&"".to_string()),
                     tags
                 )?;
             }
@@ -129,36 +124,10 @@ fn get_category_things(tx: &Transaction, category_id: &TagId) -> Result<Vec<Thin
 
     while let Some(row) = rows.next()? {
         let url: String = row.get(0)?;
-        let tags = get_thing_tags(tx, &url)?;
-        let thing = Thing::new(url, row.get(1)?, tags, row.get(2)?);
+        // let tags = get_thing_tags(tx, &url)?;
+        let thing = Thing::new(url, row.get(1)?, row.get(2)?, category_id.clone());
 
         list.push(thing);
-    }
-
-    Ok(list)
-}
-
-fn get_thing_tags(tx: &Transaction, thing_id: &str) -> Result<Vec<TagId>> {
-    let mut stmt = tx.prepare(
-        r#"
-        SELECT
-            tag_id
-        FROM
-            thing_tag
-        WHERE
-            thing_id = ?
-        "#,
-    )?;
-    let rows = stmt.query_map(&[thing_id], |row| {
-        let tag: TagId = row.get(0)?;
-
-        Ok(tag)
-    })?;
-
-    let mut list = Vec::new();
-
-    for result in rows {
-        list.push(result?);
     }
 
     Ok(list)

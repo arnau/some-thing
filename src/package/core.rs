@@ -46,7 +46,7 @@ pub type ResourceProfile = Profile;
 pub type Identifier = String;
 
 /// An identifier string. Lower case characters with `.`, `_`, `-` and `/` are allowed.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Name(String);
 
 impl Name {
@@ -179,6 +179,10 @@ pub enum PackageError {
     UnknownProfile(String),
     #[error("Field `{0}` is required.")]
     RequiredField(String),
+    #[error(transparent)]
+    JsonError(#[from] serde_json::Error),
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
 }
 
 #[cfg(test)]

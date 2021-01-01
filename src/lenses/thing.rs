@@ -1,14 +1,7 @@
 use scraper::{Html, Selector};
 use url::Url;
 
-use crate::store::{Store, ThingStore};
-use crate::{thing::NewThing, Report, Result};
-
-pub fn add(store: &mut Store, thing: NewThing) -> Result<Report> {
-    ThingStore::write(store, thing)?;
-
-    Ok(Report::new("Success"))
-}
+use crate::Result;
 
 pub fn validate_url<S: Into<String>>(input: S) -> Result<()> {
     Url::parse(&input.into())?;

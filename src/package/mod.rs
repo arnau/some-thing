@@ -51,6 +51,10 @@
 
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::prelude::*;
+use std::io::BufReader;
+use std::path::Path;
 use std::str::FromStr;
 use uuid::Uuid;
 
@@ -92,6 +96,22 @@ impl Package {
 
     pub fn description(&self) -> &str {
         &self.description
+    }
+
+    pub fn resources(&self) -> &[Resource] {
+        &self.resources
+    }
+
+    pub fn from_reader<R: Read>(rdr: R) -> Result<Self, PackageError> {
+        Ok(serde_json::from_reader(rdr)?)
+    }
+
+    pub fn from_path<P: AsRef<Path>>(path: P) -> Result<Self, PackageError> {
+        let location = path.as_ref().join(DESCRIPTOR_PATH);
+        let package_file = File::open(location)?;
+        let package_reader = BufReader::new(package_file);
+
+        Self::from_reader(package_reader)
     }
 }
 

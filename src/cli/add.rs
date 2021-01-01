@@ -1,26 +1,29 @@
 use clap::Clap;
+use std::io::prelude::*;
 use std::path::PathBuf;
 
 use super::Prompter;
+use crate::context::Context;
 use crate::lenses;
-use crate::store::{Store, DEFAULT_PATH};
 use crate::tag::TagSet;
-use crate::thing::NewThingBuilder;
+use crate::thing::Thing;
 use crate::{Report, Result};
 
 /// Add a new item to the collection.
 #[derive(Debug, Clap)]
 pub struct Cmd {
-    /// Store path
-    #[clap(long, value_name = "path", default_value = DEFAULT_PATH)]
-    store_path: PathBuf,
+    /// The location where to find the Some package to be destroyed.
+    #[clap(default_value = ".")]
+    path: PathBuf,
 }
 
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
         let mut prompter = Prompter::new()?;
-        let mut store = Store::open(&self.store_path)?;
-        let mut thing = NewThingBuilder::new();
+        let context = Context::new(&self.path)?;
+        let mut thing_file = context.open_resource("thing")?;
+        let mut tag_file = context.open_resource("tag")?;
+        let mut thingtag_file = context.open_resource("thing_tag")?;
 
         // Main info
         let url = prompter.demand("url")?;
@@ -29,7 +32,7 @@ impl Cmd {
         let summary = prompter.ask_once("summary")?;
 
         // Category
-        let category_items = lenses::tag::full_set(&mut store)?;
+        let category_items = TagSet::from_reader(&mut tag_file)?;
         let default_category_id = "miscellaneous";
         let category_id = ask_category(&mut prompter, default_category_id, category_items.clone());
 
@@ -43,18 +46,41 @@ impl Cmd {
         prompter.flush()?;
 
         // Build the thing
-        thing.with_url(url);
-        thing.with_name(name);
-        if let Some(summary) = summary {
-            thing.with_summary(summary);
-        };
-        thing.with_category_id(category_id);
-        thing.with_tags(&tags);
+        let thing = Thing::new(url, name, summary, category_id);
 
-        let report = lenses::thing::add(&mut store, thing.build()?)?;
+        // Write
+        write_thing(&thing, &mut thing_file)?;
+        write_thingtags(&thing, &tags, &mut thingtag_file)?;
 
+        let report = Report::new("Success");
         Ok(report)
     }
+}
+
+fn write_thing<W: Write>(thing: &Thing, wtr: &mut W) -> Result<()> {
+    let mut wtr = csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(wtr);
+
+    wtr.serialize(&thing)?;
+    wtr.flush()?;
+
+    Ok(())
+}
+
+fn write_thingtags<W: Write>(thing: &Thing, tags: &[String], wtr: &mut W) -> Result<()> {
+    let mut wtr = csv::WriterBuilder::new()
+        .has_headers(false)
+        .from_writer(wtr);
+
+    for tag in tags {
+        let record = vec![thing.url(), &tag];
+        wtr.write_record(&record)?;
+    }
+
+    wtr.flush()?;
+
+    Ok(())
 }
 
 /// Ask for a category or fallback to the default category.

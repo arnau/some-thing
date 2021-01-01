@@ -10,6 +10,7 @@ use toml;
 use url;
 
 pub mod cli;
+pub mod context;
 pub mod lenses;
 pub mod package;
 pub mod store;
@@ -17,7 +18,8 @@ pub mod tag;
 pub mod thing;
 
 use package::core::PackageError;
-use thing::NewThingError;
+use store::StoreError;
+use thing::ThingError;
 
 pub type Result<T> = std::result::Result<T, SomeError>;
 
@@ -55,10 +57,13 @@ impl Event {
 #[derive(Error, Debug)]
 pub enum SomeError {
     // Internal
-    #[error("new thing error")]
-    NewThing(#[from] NewThingError),
+    #[error(transparent)]
+    Thing(#[from] ThingError),
     #[error(transparent)]
     Package(#[from] PackageError),
+    #[error(transparent)]
+    StoreError(#[from] StoreError),
+
     #[error("unknown {0}")]
     Unknown(String),
     #[error("url exists '{0}'")]
@@ -73,6 +78,7 @@ pub enum SomeError {
     SealError(String),
     #[error("`{0}` is not a Some package.")]
     MissingPackageDescriptor(String),
+
     // External
     #[error("date error")]
     Date(#[from] ChronoError),

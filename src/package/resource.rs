@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use super::core::{Name, Profile, ResourceProfile};
 
 /// Represents a [Tabular Data Resource](https://specs.frictionlessdata.io/tabular-data-resource/).
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Resource {
     pub profile: ResourceProfile,
     pub name: Name,
@@ -36,7 +36,7 @@ impl Resource {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Schema {
     pub fields: Vec<Field>,
     #[serde(rename = "primaryKey")]
@@ -45,7 +45,7 @@ pub struct Schema {
     pub foreign_keys: Vec<ForeignKey>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Field {
     pub name: Name,
     pub description: String,
@@ -56,25 +56,25 @@ pub struct Field {
     pub constraints: Vec<Constraint>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Constraint {
     pub required: bool,
     pub unique: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForeignKey {
     pub fields: Vec<Name>,
     pub reference: Reference,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Reference {
     pub resource: Name,
     pub fields: Vec<Name>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Encoding {
     #[serde(rename = "UTF-8")]
     Utf8,

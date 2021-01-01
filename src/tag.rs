@@ -1,9 +1,13 @@
+use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::io::prelude::*;
 use std::iter::FromIterator;
+
+use crate::Result;
 
 pub type TagId = String;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Serialize, Deserialize)]
 pub struct Tag {
     id: TagId,
     name: Option<String>,
@@ -56,6 +60,20 @@ impl TagSet {
 
     pub fn first(&self) -> Option<&Tag> {
         self.0.first()
+    }
+
+    /// Loads a TagSet from a Reader. Must be a valid CSV.
+    pub fn from_reader<R: Read>(rdr: &mut R) -> Result<Self> {
+        let mut rdr = csv::Reader::from_reader(rdr);
+        let mut set = Vec::new();
+
+        for result in rdr.deserialize() {
+            let record: Tag = result?;
+
+            set.push(record);
+        }
+
+        Ok(Self(set))
     }
 }
 
