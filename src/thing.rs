@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
-use std::io;
+use std::{fmt, io};
 use thiserror::Error;
 
 use crate::tag::TagId;
+use crate::Markdown;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Thing {
@@ -39,6 +40,19 @@ impl Thing {
         &self.category_id
     }
 }
+
+impl fmt::Display for Thing {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
+// impl Markdown for Thing {
+//     fn fmt_md(&self, f: &mut fmt::Formatter<'_>) -> Result<(), fmt::Error> {
+//         write!(f, "")
+
+//     }
+// }
 
 mod empty_string {
     use serde::Deserialize;

@@ -12,14 +12,22 @@ use url;
 pub mod cli;
 pub mod context;
 pub mod lenses;
+pub mod markdown;
 pub mod package;
 pub mod store;
 pub mod tag;
+pub mod tag_set;
 pub mod thing;
+pub mod thing_set;
+pub mod thingtag;
+pub mod thingtag_set;
 
+pub use markdown::Markdown;
 use package::core::PackageError;
 use store::StoreError;
+use tag::TagError;
 use thing::ThingError;
+use thingtag::ThingtagError;
 
 pub type Result<T> = std::result::Result<T, SomeError>;
 
@@ -59,6 +67,10 @@ pub enum SomeError {
     // Internal
     #[error(transparent)]
     Thing(#[from] ThingError),
+    #[error(transparent)]
+    Thingtag(#[from] ThingtagError),
+    #[error(transparent)]
+    Tag(#[from] TagError),
     #[error(transparent)]
     Package(#[from] PackageError),
     #[error(transparent)]

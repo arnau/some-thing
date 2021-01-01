@@ -4,7 +4,8 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::tag::{Tag, TagId, TagSet};
+use crate::tag::{Tag, TagId};
+use crate::tag_set::TagSet;
 use crate::thing::Thing;
 use crate::Result;
 
@@ -178,6 +179,62 @@ impl TagStore {
         Ok(TagSet::new(rows))
     }
 }
+
+// TODO: REVIEW
+// fn get_categories(tx: &Transaction) -> Result<Vec<Tag>> {
+//     let mut stmt = tx.prepare(
+//         r#"
+//         SELECT DISTINCT
+//             tag.id,
+//             tag.name,
+//             tag.summary
+//         FROM
+//             thing
+//         JOIN
+//             tag ON tag.id = thing.category_id
+//         "#,
+//     )?;
+
+//     let rows = stmt.query_map(NO_PARAMS, |row| {
+//         Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?))
+//     })?;
+
+//     let mut list = Vec::new();
+
+//     for result in rows {
+//         list.push(result?);
+//     }
+
+//     Ok(list)
+// }
+
+// fn get_category_things(tx: &Transaction, category_id: &TagId) -> Result<Vec<Thing>> {
+//     let mut stmt = tx.prepare(
+//         r#"
+//         SELECT DISTINCT
+//             url,
+//             name,
+//             summary
+//         FROM
+//            thing
+//         WHERE
+//             category_id = ?
+//         "#,
+//     )?;
+
+//     let mut rows = stmt.query(&[category_id])?;
+//     let mut list = Vec::new();
+
+//     while let Some(row) = rows.next()? {
+//         let url: String = row.get(0)?;
+//         // let tags = get_thing_tags(tx, &url)?;
+//         let thing = Thing::new(url, row.get(1)?, row.get(2)?, category_id.clone());
+
+//         list.push(thing);
+//     }
+
+//     Ok(list)
+// }
 
 #[derive(Debug, Error)]
 pub enum StoreError {

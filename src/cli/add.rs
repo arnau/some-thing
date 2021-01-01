@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use super::Prompter;
 use crate::context::Context;
 use crate::lenses;
-use crate::tag::TagSet;
+use crate::tag_set::TagSet;
 use crate::thing::Thing;
 use crate::{Report, Result};
 

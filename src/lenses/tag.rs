@@ -1,7 +1,8 @@
 use skim::prelude::*;
 
 use crate::store::{Store, TagStore};
-use crate::tag::{Tag, TagSet};
+use crate::tag::Tag;
+use crate::tag_set::TagSet;
 use crate::Result;
 
 /// The full set of tags in the store.

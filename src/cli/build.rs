@@ -1,14 +1,18 @@
 use clap::Clap;
-use rusqlite::{Transaction, NO_PARAMS};
+use itertools::Itertools;
+use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
 use crate::context::Context;
-use crate::store::{Store, Strategy, DEFAULT_PATH};
-use crate::tag::{Tag, TagId};
+use crate::store::{Strategy, DEFAULT_PATH};
+use crate::tag::TagId;
+use crate::tag_set::TagSet;
 use crate::thing::Thing;
-use crate::{Report, Result};
+use crate::thing_set::ThingSet;
+use crate::thingtag_set::ThingtagSet;
+use crate::{Report, Result, SomeError};
 
 /// Build the Markdown version of the collection.
 #[derive(Debug, Clap)]
@@ -23,112 +27,121 @@ pub struct Cmd {
 
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
-        let context = Context::new(&self.path)?;
-
-        let mut store = Store::open(&self.cache)?;
-        let tx = store.transaction()?;
+        let mut context = Context::new(&self.path)?;
         let mut writer = io::stdout();
 
-        process(&tx, &context, &mut writer)?;
-
-        tx.commit()?;
+        write_readme(&mut context, &mut writer)?;
 
         Ok(Report::new(""))
     }
 }
 
-fn process<W: Write>(tx: &Transaction, context: &Context, writer: &mut W) -> Result<()> {
+fn write_readme<W: Write>(context: &mut Context, mut writer: &mut W) -> Result<()> {
+    let mut thing_file = context.open_resource("thing")?;
+    let mut tag_file = context.open_resource("tag")?;
+    let mut thingtag_file = context.open_resource("thing_tag")?;
+
+    let thingset = ThingSet::from_reader(&mut thing_file)?;
+    let tagset = TagSet::from_reader(&mut tag_file)?;
+    let thingtagset = ThingtagSet::from_reader(&mut thingtag_file)?;
+
+    let groups: Groups = thingset
+        .clone()
+        .into_iter()
+        .into_group_map_by(|thing| thing.category_id().clone());
+    let tag_groups: TagGroups = thingtagset
+        .clone()
+        .into_iter()
+        .map(|thingtag| {
+            (
+                thingtag.thing_id().to_string(),
+                thingtag.tag_id().to_string(),
+            )
+        })
+        .into_group_map_by(|tuple| tuple.0.to_string());
+
+    write_header(&context, &mut writer)?;
+    write_body(&context, &mut writer, &groups, &tag_groups, &tagset)?;
+    write_footer(&context, &mut writer)?;
+
+    Ok(())
+}
+
+fn write_header<W: Write>(context: &Context, writer: &mut W) -> Result<()> {
     let package = context.package();
-    writeln!(writer, "# {}\n", package.name())?;
+    writeln!(writer, "# {}\n", package.title())?;
     writeln!(writer, "{}\n", package.description())?;
 
-    let categories = get_categories(tx)?;
+    Ok(())
+}
 
-    for category in categories {
-        let category_id = category.id().to_string();
-        let name = category.name().unwrap_or(&category_id);
-        let things = get_category_things(tx, &category_id)?;
+fn write_footer<W: Write>(context: &Context, writer: &mut W) -> Result<()> {
+    let package = context.package();
 
-        if !&things.is_empty() {
-            writeln!(writer, "## {}\n", name)?;
-            if let Some(summary) = category.summary() {
-                writeln!(writer, "{}\n", summary)?;
-            }
+    if !package.licenses().is_empty() {
+        writeln!(writer, "\n## Licence\n")?;
 
-            writeln!(writer, "| name | summary | tags |")?;
-            writeln!(writer, "| - | - | - |")?;
-
-            for thing in things {
-                let link = format!("[{}]({})", &thing.name(), &thing.url());
-                let tags = "";
-                let summary = &thing.summary();
-                writeln!(
-                    writer,
-                    "| {} | {} | {} |",
-                    link,
-                    summary.as_ref().unwrap_or(&"".to_string()),
-                    tags
-                )?;
-            }
-
-            writeln!(writer, "")?;
+        for licence in package.licenses() {
+            writeln!(
+                writer,
+                "This dataset is licensed under the [{}]({}).\n",
+                licence.title(),
+                licence.path(),
+            )?;
         }
     }
 
     Ok(())
 }
 
-fn get_categories(tx: &Transaction) -> Result<Vec<Tag>> {
-    let mut stmt = tx.prepare(
-        r#"
-        SELECT DISTINCT
-            tag.id,
-            tag.name,
-            tag.summary
-        FROM
-            thing
-        JOIN
-            tag ON tag.id = thing.category_id
-        "#,
-    )?;
+type Groups = HashMap<String, Vec<Thing>>;
+type TagGroups = HashMap<String, Vec<(String, TagId)>>;
 
-    let rows = stmt.query_map(NO_PARAMS, |row| {
-        Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?))
-    })?;
-
-    let mut list = Vec::new();
-
-    for result in rows {
-        list.push(result?);
+fn write_body<W: Write>(
+    _context: &Context,
+    writer: &mut W,
+    groups: &Groups,
+    tag_groups: &TagGroups,
+    tagset: &TagSet,
+) -> Result<()> {
+    if groups.is_empty() {
+        writeln!(writer, "**This collection is empty**")?;
     }
 
-    Ok(list)
-}
+    for (category_id, things) in groups {
+        let category = tagset
+            .clone()
+            .into_iter()
+            .find(|tag| tag.id() == category_id)
+            .ok_or(SomeError::Unknown(format!(
+                "The tag `{}` is missing. Corrupted dataset.",
+                &category_id
+            )))?;
 
-fn get_category_things(tx: &Transaction, category_id: &TagId) -> Result<Vec<Thing>> {
-    let mut stmt = tx.prepare(
-        r#"
-        SELECT DISTINCT
-            url,
-            name,
-            summary
-        FROM
-           thing
-        WHERE
-            category_id = ?
-        "#,
-    )?;
+        writeln!(writer, "\n## {}\n", category.name().unwrap_or(&category_id))?;
+        if let Some(summary) = category.summary() {
+            writeln!(writer, "{}\n", summary)?;
+        }
 
-    let mut rows = stmt.query(&[category_id])?;
-    let mut list = Vec::new();
+        writeln!(writer, "| name | summary | tags |")?;
+        writeln!(writer, "| - | - | - |")?;
 
-    while let Some(row) = rows.next()? {
-        let url: String = row.get(0)?;
-        // let tags = get_thing_tags(tx, &url)?;
-        let thing = Thing::new(url, row.get(1)?, row.get(2)?, category_id.clone());
-
-        list.push(thing);
+        for thing in things {
+            let link = format!("[{}]({})", &thing.name(), &thing.url());
+            let tags = &tag_groups[thing.url()]
+                .iter()
+                .map(|(_, tag)| tag)
+                .join("; ");
+            let summary = &thing.summary();
+            writeln!(
+                writer,
+                "| {} | {} | {} |",
+                link,
+                summary.as_ref().unwrap_or(&"".to_string()),
+                tags
+            )?;
+        }
     }
 
-    Ok(list)
+    Ok(())
 }

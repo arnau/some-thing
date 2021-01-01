@@ -94,12 +94,20 @@ impl Package {
         &self.name
     }
 
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
     pub fn description(&self) -> &str {
         &self.description
     }
 
     pub fn resources(&self) -> &[Resource] {
         &self.resources
+    }
+
+    pub fn licenses(&self) -> &[Licence] {
+        &self.licenses
     }
 
     pub fn from_reader<R: Read>(rdr: R) -> Result<Self, PackageError> {

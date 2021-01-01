@@ -130,6 +130,20 @@ pub struct Licence {
     pub title: String,
 }
 
+impl Licence {
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    pub fn path(&self) -> &str {
+        &self.path
+    }
+}
+
 impl fmt::Display for Licence {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if f.alternate() {
