@@ -108,7 +108,7 @@ fn write_body<W: Write>(
         writeln!(writer, "**This collection is empty**")?;
     }
 
-    for (category_id, things) in groups {
+    for (category_id, things) in itertools::sorted(groups) {
         let category = tagset
             .clone()
             .into_iter()
@@ -128,17 +128,15 @@ fn write_body<W: Write>(
 
         for thing in things {
             let link = format!("[{}]({})", &thing.name(), &thing.url());
-            let tags = &tag_groups[thing.url()]
-                .iter()
-                .map(|(_, tag)| tag)
-                .join("; ");
+            let tags = tag_groups[thing.url()].iter().map(|(_, tag)| tag);
+
             let summary = &thing.summary();
             writeln!(
                 writer,
                 "| {} | {} | {} |",
                 link,
                 summary.as_ref().unwrap_or(&"".to_string()),
-                tags
+                itertools::sorted(tags).join("; ")
             )?;
         }
     }

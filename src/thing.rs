@@ -5,10 +5,10 @@ use thiserror::Error;
 use crate::tag::TagId;
 use crate::Markdown;
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Thing {
-    url: String,
     name: String,
+    url: String,
     #[serde(with = "empty_string")]
     summary: Option<String>,
     category_id: TagId,

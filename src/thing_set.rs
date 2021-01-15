@@ -40,6 +40,8 @@ impl ThingSet {
             set.push(record);
         }
 
+        set.sort();
+
         Ok(Self(set))
     }
 }
