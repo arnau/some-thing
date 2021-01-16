@@ -12,7 +12,7 @@ use crate::package::resource::Resource;
 use crate::package::{self, Package, PackageBuilder};
 use crate::{Report, Result};
 
-/// Create a new Some package in an existing directory.
+/// Creates a new Some package in an existing directory.
 ///
 /// This command will scaffold a new Some-flavoured [Tabular Data Package] in the current directory.
 /// Give a path as an argument to create in the given directory.

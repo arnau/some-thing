@@ -14,7 +14,7 @@ use crate::thing_set::ThingSet;
 use crate::thingtag_set::ThingtagSet;
 use crate::{Report, Result, SomeError};
 
-/// Build the Markdown version of the collection.
+/// Builds the Markdown version of the collection.
 #[derive(Debug, Clap)]
 pub struct Cmd {
     /// The path to the cache.

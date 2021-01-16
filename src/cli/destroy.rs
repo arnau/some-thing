@@ -8,7 +8,7 @@ use crate::package::resource::Resource;
 use crate::package::{self, Package};
 use crate::{Event, Report, Result, SomeError};
 
-/// Destroy a Some package in an existing directory.
+/// Destroys a Some package in an existing directory.
 ///
 /// This command will destroy any file and directory that is part of the Some package definition.
 /// That is:

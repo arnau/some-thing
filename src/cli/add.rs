@@ -9,7 +9,7 @@ use crate::tag_set::TagSet;
 use crate::thing::Thing;
 use crate::{Report, Result};
 
-/// Add a new item to the collection.
+/// Adds a new item to the collection.
 #[derive(Debug, Clap)]
 pub struct Cmd {
     /// The location where to find the Some package to be destroyed.
