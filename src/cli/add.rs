@@ -34,8 +34,8 @@ impl Cmd {
             return Ok(Report::new("This thing already exists."));
         }
 
-
         lenses::thing::fetch_thing(&url)?;
+
         let name = prompter.demand("name")?;
         let summary = prompter.ask_once("summary")?;
 

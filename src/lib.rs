@@ -129,3 +129,11 @@ impl de::Error for SomeError {
         SomeError::Serde(msg.to_string())
     }
 }
+
+#[macro_export]
+macro_rules! info {
+    ($a:expr, $b:expr) => {{
+        use ansi_term::Colour::Cyan;
+        println!("{} {}", Cyan.bold().paint($a), $b);
+    }};
+}
