@@ -7,6 +7,7 @@ use crate::context::Context;
 use crate::lenses;
 use crate::tag_set::TagSet;
 use crate::thing::Thing;
+use crate::thing_set::ThingSet;
 use crate::{Report, Result};
 
 /// Adds a new item to the collection.
@@ -24,9 +25,16 @@ impl Cmd {
         let mut thing_file = context.open_resource("thing")?;
         let mut tag_file = context.open_resource("tag")?;
         let mut thingtag_file = context.open_resource("thing_tag")?;
+        let thingset = ThingSet::from_reader(&mut thing_file)?;
 
         // Main info
         let url = prompter.demand("url")?;
+
+        if thingset.into_iter().find(|t| t.url() == url).is_some() {
+            return Ok(Report::new("This thing already exists."));
+        }
+
+
         lenses::thing::fetch_thing(&url)?;
         let name = prompter.demand("name")?;
         let summary = prompter.ask_once("summary")?;
