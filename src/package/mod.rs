@@ -11,7 +11,7 @@
 //! The creation of a package requires quite a few bits of information so the [`PackageBuilder`]
 //! implements the builder pattern to ease the task. Note that to build a valid [`Package`] you'll
 //! need to create resources either using the [`ResourceBuilder`][resource::ResourceBuilder] or a helper function
-//! such as [`thing::package_resource`][crate::lenses::thing::package_resource] for the
+//! such as [`package::resources`][crate::lenses::package::resources] for the
 //! [`Thing`][crate::thing::Thing] entity.
 //!
 //! ## Examples
@@ -24,14 +24,14 @@
 //! use some::{
 //!     package::PackageBuilder,
 //!     package::core::Name,
-//!     lenses::thing::package_resource,
+//!     lenses::package::resources,
 //! };
 //!
 //! let package = PackageBuilder::new("some-sqlite")
 //!     .expect("to be a package builder with a safe name")
 //!     .title("Some SQLite")
 //!     .description("A collection of some SQLite resources.")
-//!     .resources(vec![package_resource()])
+//!     .resources(resources())
 //!     .build();
 //!
 //! assert!(package.is_ok());
@@ -131,7 +131,7 @@ impl Package {
 /// use some::{
 ///     package::PackageBuilder,
 ///     package::core::Name,
-///     lenses::thing::package_resource,
+///     lenses::package::resources,
 /// };
 /// use std::str::FromStr;
 ///
@@ -139,7 +139,7 @@ impl Package {
 ///     .expect("to be a package builder with a safe name")
 ///     .title("Some SQLite")
 ///     .description("A collection of some SQLite resources.")
-///     .resources(vec![package_resource()])
+///     .resources(resources())
 ///     .build();
 ///
 /// assert!(package.is_ok());

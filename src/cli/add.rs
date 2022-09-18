@@ -1,4 +1,4 @@
-use clap::Clap;
+use clap::Parser;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
@@ -10,9 +10,9 @@ use crate::thing::Thing;
 use crate::{Report, Result};
 
 /// Adds a new item to the collection.
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 pub struct Cmd {
-    /// The location where to find the Some package to be destroyed.
+    /// The location where to find the Some package to be used.
     #[clap(default_value = ".")]
     path: PathBuf,
 }

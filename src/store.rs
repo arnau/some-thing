@@ -1,4 +1,4 @@
-use rusqlite::{Connection, Row, ToSql, Transaction, NO_PARAMS};
+use rusqlite::{Connection, Row, ToSql, Transaction};
 use std::include_str;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
@@ -37,7 +37,7 @@ impl FromStr for Strategy {
 
 #[derive(Debug)]
 pub struct Store {
-    strategy: Strategy,
+    pub strategy: Strategy,
     conn: Connection,
 }
 
@@ -73,8 +73,7 @@ impl Store {
     /// A query mapped over the given function.
     pub fn query<T, P, F>(&mut self, query: &str, params: P, f: F) -> Result<Vec<T>>
     where
-        P: IntoIterator,
-        P::Item: ToSql,
+        P: rusqlite::Params,
         F: FnMut(&Row<'_>) -> std::result::Result<T, rusqlite::Error>,
     {
         let mut stmt = self.conn.prepare(query)?;
@@ -153,7 +152,7 @@ impl TagStore {
     }
 
     pub fn get_all(store: &mut Store) -> Result<TagSet> {
-        let rows = store.query(r#"SELECT * FROM tag ORDER BY id"#, NO_PARAMS, |row| {
+        let rows = store.query(r#"SELECT * FROM tag ORDER BY id"#, [], |row| {
             Ok(Tag::new(row.get(0)?, row.get(1)?, row.get(2)?))
         })?;
 

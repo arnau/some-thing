@@ -44,15 +44,15 @@ impl From<FullLicence> for Licence {
 }
 
 impl SkimItem for Licence {
-    fn display(&self) -> Cow<AnsiString> {
-        Cow::Owned(self.name.clone().into())
+    fn display(&self, _: DisplayContext) -> AnsiString {
+        self.name.clone().into()
     }
 
     fn text(&self) -> Cow<str> {
         Cow::Borrowed(&self.name)
     }
 
-    fn preview(&self) -> ItemPreview {
+    fn preview(&self, _: PreviewContext) -> ItemPreview {
         ItemPreview::Text(format!("[{}]({})\n{}", self.name, self.path, self.title))
     }
 }

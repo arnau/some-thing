@@ -11,15 +11,15 @@ pub fn full_set(store: &mut Store) -> Result<TagSet> {
 }
 
 impl SkimItem for Tag {
-    fn display(&self) -> Cow<AnsiString> {
-        Cow::Owned(self.id().into())
+    fn display(&self, _: DisplayContext) -> AnsiString {
+        self.id().into()
     }
 
     fn text(&self) -> Cow<str> {
         Cow::Borrowed(self.id())
     }
 
-    fn preview(&self) -> ItemPreview {
+    fn preview(&self, _: PreviewContext) -> ItemPreview {
         ItemPreview::Text(format!(
             "{}: {}",
             self.name().unwrap_or(&self.id().to_string()),

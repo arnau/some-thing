@@ -1,4 +1,4 @@
-use clap::Clap;
+use clap::Parser;
 use std::fs::{create_dir, File};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
@@ -18,7 +18,7 @@ use crate::{Report, Result};
 /// Give a path as an argument to create in the given directory.
 ///
 /// [Tabular Data Package]: https://specs.frictionlessdata.io/tabular-data-package/
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 pub struct Cmd {
     /// The location where to scaffold a new Some package.
     #[clap(default_value = ".")]

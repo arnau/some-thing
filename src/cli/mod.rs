@@ -23,7 +23,7 @@ pub struct Prompter {
 
 impl Prompter {
     pub fn new() -> Result<Self> {
-        let mut editor = Editor::<()>::new();
+        let mut editor = Editor::<()>::new()?;
         let project_dirs = ProjectDirs::from(PROJECT_TRIPLE.0, PROJECT_TRIPLE.1, PROJECT_TRIPLE.2)
             .ok_or(SomeError::ProjectDir);
         let history_path = project_dirs.and_then(|pd| {

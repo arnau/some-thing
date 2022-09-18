@@ -1,6 +1,7 @@
-use clap::Clap;
+use clap::Parser;
 use itertools::Itertools;
 use std::collections::HashMap;
+use std::fs::OpenOptions;
 use std::io;
 use std::io::prelude::*;
 use std::path::PathBuf;
@@ -15,11 +16,14 @@ use crate::thingtag_set::ThingtagSet;
 use crate::{Report, Result, SomeError};
 
 /// Builds the Markdown version of the collection.
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 pub struct Cmd {
     /// The path to the cache.
     #[clap(long, value_name = "path", default_value = DEFAULT_PATH)]
     cache: Strategy,
+    /// Flag to use the README.md found in the given path.
+    #[clap(short, action, default_value_t = false)]
+    output_flag: bool,
     /// The location where to find the Some package to be destroyed.
     #[clap(default_value = ".")]
     path: PathBuf,
@@ -28,7 +32,17 @@ pub struct Cmd {
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
         let mut context = Context::new(&self.path)?;
-        let mut writer = io::stdout();
+        let mut writer: Box<dyn Write> = if self.output_flag {
+            let file = OpenOptions::new()
+                .write(true)
+                .truncate(true)
+                .create(true)
+                .open(self.path.join("README.md"))?;
+
+            Box::new(file)
+        } else {
+            Box::new(io::stdout())
+        };
 
         write_readme(&mut context, &mut writer)?;
 
@@ -36,7 +50,7 @@ impl Cmd {
     }
 }
 
-fn write_readme<W: Write>(context: &mut Context, mut writer: &mut W) -> Result<()> {
+fn write_readme<W: Write + ?Sized>(context: &mut Context, mut writer: &mut W) -> Result<()> {
     let mut thing_file = context.open_resource("thing")?;
     let mut tag_file = context.open_resource("tag")?;
     let mut thingtag_file = context.open_resource("thing_tag")?;
@@ -119,27 +133,42 @@ fn write_body<W: Write>(
             )))?;
 
         writeln!(writer, "\n## {}\n", category.name().unwrap_or(&category_id))?;
+
         if let Some(summary) = category.summary() {
             writeln!(writer, "{}\n", summary)?;
         }
 
-        writeln!(writer, "| name | summary | tags |")?;
-        writeln!(writer, "| - | - | - |")?;
-
-        for thing in things {
-            let link = format!("[{}]({})", &thing.name(), &thing.url());
-            let tags = tag_groups[thing.url()].iter().map(|(_, tag)| tag);
-
-            let summary = &thing.summary();
-            writeln!(
-                writer,
-                "| {} | {} | {} |",
-                link,
-                summary.as_ref().unwrap_or(&"".to_string()),
-                itertools::sorted(tags).join("; ")
-            )?;
-        }
+        write_table(writer, things, &tag_groups)?;
     }
+
+    Ok(())
+}
+
+type TagGroup = Vec<(String, TagId)>;
+
+fn write_table<W: Write>(writer: &mut W, things: &Vec<Thing>, tag_groups: &TagGroups) -> Result<()> {
+    writeln!(writer, "| name | summary | tags |")?;
+    writeln!(writer, "| - | - | - |")?;
+
+    for thing in itertools::sorted(things) {
+        write_row(writer, thing, &tag_groups[thing.url()])?;
+    }
+
+    Ok(())
+}
+
+fn write_row<W: Write>(writer: &mut W, thing: &Thing, tag_group: &TagGroup) -> Result<()> {
+    let link = format!("[{}]({})", &thing.name(), &thing.url());
+    let tags = tag_group.iter().map(|(_, tag)| tag);
+    let summary = &thing.summary();
+
+    writeln!(
+        writer,
+        "| {} | {} | {} |",
+        link,
+        summary.as_ref().unwrap_or(&"".to_string()),
+        itertools::sorted(tags).join("; ")
+    )?;
 
     Ok(())
 }

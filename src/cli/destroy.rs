@@ -1,4 +1,4 @@
-use clap::Clap;
+use clap::Parser;
 use std::fs::{remove_dir, remove_file, File};
 use std::io::BufReader;
 use std::path::{Path, PathBuf};
@@ -18,7 +18,7 @@ use crate::{Event, Report, Result, SomeError};
 /// * `data/tag.csv`
 /// * `data/thing_tag.csv`
 /// * `data/` if after removing all the above it is empty
-#[derive(Debug, Clap)]
+#[derive(Debug, Parser)]
 pub struct Cmd {
     /// The location where to find the Some package to be destroyed.
     #[clap(default_value = ".")]

@@ -3,12 +3,11 @@ use std::{fmt, io};
 use thiserror::Error;
 
 use crate::tag::TagId;
-use crate::Markdown;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Thing {
-    name: String,
     url: String,
+    name: String,
     #[serde(with = "empty_string")]
     summary: Option<String>,
     category_id: TagId,
