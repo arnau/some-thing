@@ -6,9 +6,9 @@ use crate::tag_set::TagSet;
 use crate::Result;
 
 /// The full set of tags in the store.
-pub fn full_set(store: &mut Store) -> Result<TagSet> {
-    Ok(TagStore::get_all(store)?)
-}
+// pub fn full_set(store: &mut Store) -> Result<TagSet> {
+//     Ok(TagStore::get_all(store)?)
+// }
 
 impl SkimItem for Tag {
     fn display(&self, _: DisplayContext) -> AnsiString {

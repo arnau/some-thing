@@ -4,9 +4,11 @@ use thiserror::Error;
 
 use crate::tag::TagId;
 
+pub type ThingId = String;
+
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Thing {
-    url: String,
+    url: ThingId,
     name: String,
     #[serde(with = "empty_string")]
     summary: Option<String>,
@@ -14,7 +16,7 @@ pub struct Thing {
 }
 
 impl Thing {
-    pub fn new(url: String, name: String, summary: Option<String>, category_id: TagId) -> Self {
+    pub fn new(url: ThingId, name: String, summary: Option<String>, category_id: TagId) -> Self {
         Self {
             url,
             name,

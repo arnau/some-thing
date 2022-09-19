@@ -5,6 +5,7 @@ use std::path::PathBuf;
 use super::Prompter;
 use crate::context::Context;
 use crate::lenses;
+use crate::store::{Store, Strategy};
 use crate::tag_set::TagSet;
 use crate::thing::Thing;
 use crate::thing_set::ThingSet;
@@ -26,6 +27,22 @@ impl Cmd {
         let mut tag_file = context.open_resource("tag")?;
         let mut thingtag_file = context.open_resource("thing_tag")?;
         let thingset = ThingSet::from_reader(&mut thing_file)?;
+
+        let mut store = Store::open(self.path.to_path_buf(), &Strategy::Memory)?;
+
+        let r = store.query(
+            "select * from staging.sqlite_schema",
+            [],
+            |row| {
+                let url: String = row.get(0)?;
+                let name: String = row.get(1)?;
+                let summary: Option<String> = row.get(2)?;
+
+                Ok((url, name, summary))
+            },
+        )?;
+
+        dbg!(r);
 
         // Main info
         let url = prompter.demand("url")?;

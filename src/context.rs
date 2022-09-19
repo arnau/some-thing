@@ -24,7 +24,7 @@ impl Context {
         let path = path.as_ref().canonicalize()?;
         let package = Package::from_path(&path)?;
         let strategy = Strategy::from_str(DEFAULT_PATH)?;
-        let cache = Store::open(&strategy)?;
+        let cache = Store::open(path.to_path_buf(), &strategy)?;
 
         Ok(Self {
             package,
