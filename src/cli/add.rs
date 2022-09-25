@@ -1,14 +1,13 @@
 use clap::Parser;
-use std::io::prelude::*;
 use std::path::PathBuf;
 
 use super::Prompter;
 use crate::context::Context;
+use crate::entities::change::Data;
 use crate::lenses;
-use crate::store::{Store, Strategy};
+use crate::services::staging;
+use crate::store::{Repository, TagStore, ThingStore};
 use crate::tag_set::TagSet;
-use crate::thing::Thing;
-use crate::thing_set::ThingSet;
 use crate::{Report, Result};
 
 /// Adds a new item to the collection.
@@ -22,90 +21,52 @@ pub struct Cmd {
 impl Cmd {
     pub fn run(&self) -> Result<Report> {
         let mut prompter = Prompter::new()?;
-        let context = Context::new(&self.path)?;
-        let mut thing_file = context.open_resource("thing")?;
-        let mut tag_file = context.open_resource("tag")?;
-        let mut thingtag_file = context.open_resource("thing_tag")?;
-        let thingset = ThingSet::from_reader(&mut thing_file)?;
-
-        let mut store = Store::open(self.path.to_path_buf(), &Strategy::Memory)?;
-
-        let r = store.query(
-            "select * from staging.sqlite_schema",
-            [],
-            |row| {
-                let url: String = row.get(0)?;
-                let name: String = row.get(1)?;
-                let summary: Option<String> = row.get(2)?;
-
-                Ok((url, name, summary))
-            },
-        )?;
-
-        dbg!(r);
+        let mut context = Context::new(&self.path)?;
+        let store = context.store();
 
         // Main info
         let url = prompter.demand("url")?;
 
-        if thingset.into_iter().find(|t| t.url() == url).is_some() {
+        // TODO: Consider offering the option to amend it.
+        if ThingStore::get(&store.conn, &url)?.is_some() {
             return Ok(Report::new("This thing already exists."));
         }
 
+        // TODO: Move to a new service 'fetcher'.
         lenses::thing::fetch_thing(&url)?;
 
         let name = prompter.demand("name")?;
         let summary = prompter.ask_once("summary")?;
 
         // Category
-        let category_items = TagSet::from_reader(&mut tag_file)?;
+        let category_set = TagSet::from_iter(TagStore::list(&store.conn)?);
         let default_category_id = "miscellaneous";
-        let category_id = ask_category(&mut prompter, default_category_id, category_items.clone());
+        let category_id = ask_category(&mut prompter, default_category_id, category_set);
 
         // Tags
-        let tag_items = category_items
-            .into_iter()
-            .filter(|tag| tag.id() != category_id)
-            .collect::<TagSet>();
-        let tags = ask_tags(&mut prompter, tag_items);
+        let tag_set = TagSet::from_iter(TagStore::list_without(
+            &store.conn,
+            &[default_category_id.into()],
+        )?);
+        let tags = ask_tags(&mut prompter, tag_set);
 
         prompter.flush()?;
 
         // Build the thing
-        let thing = Thing::new(url, name, summary, category_id);
+        let data = Data::Thing {
+            url,
+            name,
+            summary,
+            category: category_id,
+            tags,
+        };
 
-        // Write
-        write_thing(&thing, &mut thing_file)?;
-        write_thingtags(&thing, &tags, &mut thingtag_file)?;
+        staging::add(&mut context, data)?;
 
-        let report = Report::new("Success");
-        Ok(report)
+        staging::commit(&mut context)?;
+
+        Ok(Report::new("Success"))
     }
-}
-
-fn write_thing<W: Write>(thing: &Thing, wtr: &mut W) -> Result<()> {
-    let mut wtr = csv::WriterBuilder::new()
-        .has_headers(false)
-        .from_writer(wtr);
-
-    wtr.serialize(&thing)?;
-    wtr.flush()?;
-
-    Ok(())
-}
-
-fn write_thingtags<W: Write>(thing: &Thing, tags: &[String], wtr: &mut W) -> Result<()> {
-    let mut wtr = csv::WriterBuilder::new()
-        .has_headers(false)
-        .from_writer(wtr);
-
-    for tag in tags {
-        let record = vec![thing.url(), &tag];
-        wtr.write_record(&record)?;
-    }
-
-    wtr.flush()?;
-
-    Ok(())
 }
 
 /// Ask for a category or fallback to the default category.

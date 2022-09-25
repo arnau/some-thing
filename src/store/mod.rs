@@ -15,17 +15,16 @@ use std::path::{Path, PathBuf};
 use std::str::FromStr;
 use thiserror::Error;
 
-use crate::tag::TagId;
-use crate::thing::Thing;
 use crate::Result;
-use crate::thingtag::Thingtag;
 
 mod tag;
 mod thing;
 mod thing_tag;
+mod change;
 pub use tag::TagStore;
 pub use thing::ThingStore;
 pub use thing_tag::ThingtagStore;
+pub use change::ChangeStore;
 
 pub const DEFAULT_PATH: &str = ":memory:";
 
@@ -90,14 +89,37 @@ macro_rules! virtual_table {
     };
 }
 
+// TODO: this approach does not handle deletes.
 pub const OVERLAY_SCHEMA: &str = r#"
 CREATE TEMPORARY VIEW tag AS
-    SELECT * FROM staging.tag
+    SELECT
+        json_extract(data, '$.id') AS id,
+        json_extract(data, '$.name') AS name,
+        json_extract(data, '$.summary') AS summary
+    FROM staging.changelog
+    WHERE
+        kind = 'tag'
+    AND
+        operation = 'insert'
+
     UNION ALL
-    SELECT * FROM source.tag;
+    SELECT
+        id,
+        name,
+        iif(summary = '', NULL, summary)
+    FROM source.tag;
 
 CREATE TEMPORARY VIEW thing AS
-    SELECT * FROM staging.thing
+    SELECT
+        json_extract(data, '$.id') AS url,
+        json_extract(data, '$.name') AS name,
+        json_extract(data, '$.summary') AS summary,
+        json_extract(data, '$.category') AS category_id
+    FROM staging.changelog
+    WHERE
+        kind = 'thing'
+    AND
+        operation = 'insert'
     UNION ALL
     SELECT
         url,
@@ -189,12 +211,6 @@ impl Store {
         Ok(self.conn.transaction()?)
     }
 
-    pub fn batch(&self, query: &str) -> Result<()> {
-        self.conn.execute_batch(query)?;
-
-        Ok(())
-    }
-
     /// A query mapped over the given function.
     pub fn query<T, P, F>(&mut self, query: &str, params: P, f: F) -> Result<Vec<T>>
     where
@@ -211,21 +227,6 @@ impl Store {
         }
 
         Ok(items)
-    }
-
-    pub fn add(&mut self, thing: Thing, tags: &[TagId]) -> Result<()> {
-        let tx = self.transaction()?;
-
-        ThingStore::add(&tx, &thing)?;
-
-        for tag_id in tags {
-            let thingtag = Thingtag::new(thing.url().to_string(), tag_id.to_string());
-            ThingtagStore::add(&tx, &thingtag)?;
-        }
-
-        tx.commit()?;
-
-        Ok(())
     }
 }
 
@@ -264,6 +265,8 @@ fn create_source_db(conn: &Connection, path: &Path) -> Result<()> {
     Ok(())
 }
 
+// TODO: If changelog has the data as a json blob, I can get rid of the staging ring
+// alltogether.
 fn create_staging_db(conn: &Connection, path: &Path, strategy: &Strategy) -> Result<()> {
     let path = match strategy {
         Strategy::Memory => ":memory:".to_string(),
@@ -275,14 +278,11 @@ fn create_staging_db(conn: &Connection, path: &Path, strategy: &Strategy) -> Res
         ATTACH DATABASE '{}' AS staging;
 
         CREATE TABLE staging.changelog (
-            id           integer PRIMARY KEY AUTOINCREMENT,
-            timestamp    datetime DEFAULT (unixepoch()),
-            entity_table text NOT NULL,
-            operation    text NOT NULL,
-            entity_id    text NOT NULL,
-
-            CHECK (entity_table in ('thing', 'tag', 'thing_tag')),
-            CHECK (operation in ('insert', 'delete'))
+            timestamp datetime DEFAULT (datetime('now')),
+            data      text NOT NULL,
+            operation text GENERATED ALWAYS AS (lower(json_extract(data, '$.operation'))) NOT NULL,
+            kind      text GENERATED ALWAYS AS (lower(json_extract(data, '$.kind'))) NOT NULL,
+            id        text GENERATED ALWAYS AS (json_extract(data, '$.id')) NOT NULL
         );
 
         {} {} {}
@@ -292,7 +292,6 @@ fn create_staging_db(conn: &Connection, path: &Path, strategy: &Strategy) -> Res
         table!("thing", "staging"),
         table!("thing_tag", "staging"),
     );
-    println!("{}", schema);
 
     conn.execute_batch(&schema)?;
 

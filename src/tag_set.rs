@@ -2,21 +2,21 @@ use std::fmt;
 use std::io::prelude::*;
 use std::iter::FromIterator;
 
-use crate::tag::{Tag, TagError};
+use crate::tag::{self, TagError};
 
 #[derive(Debug, Clone)]
-pub struct TagSet(Vec<Tag>);
+pub struct TagSet(Vec<tag::Record>);
 
 impl TagSet {
-    pub fn new(raw: Vec<Tag>) -> Self {
+    pub fn new(raw: Vec<tag::Record>) -> Self {
         Self(raw)
     }
 
-    pub fn as_slice(&self) -> &[Tag] {
+    pub fn as_slice(&self) -> &[tag::Record] {
         self.0.as_slice()
     }
 
-    pub fn to_vec(&self) -> Vec<Tag> {
+    pub fn to_vec(&self) -> Vec<tag::Record> {
         self.0.clone()
     }
 
@@ -24,7 +24,7 @@ impl TagSet {
         self.0.len()
     }
 
-    pub fn first(&self) -> Option<&Tag> {
+    pub fn first(&self) -> Option<&tag::Record> {
         self.0.first()
     }
 
@@ -34,7 +34,7 @@ impl TagSet {
         let mut set = Vec::new();
 
         for result in rdr.deserialize() {
-            let record: Tag = result?;
+            let record: tag::Record = result?;
 
             set.push(record);
         }
@@ -44,7 +44,7 @@ impl TagSet {
 }
 
 impl IntoIterator for TagSet {
-    type Item = Tag;
+    type Item = tag::Record;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -52,8 +52,8 @@ impl IntoIterator for TagSet {
     }
 }
 
-impl FromIterator<Tag> for TagSet {
-    fn from_iter<I: IntoIterator<Item = Tag>>(iter: I) -> Self {
+impl FromIterator<tag::Record> for TagSet {
+    fn from_iter<I: IntoIterator<Item = tag::Record>>(iter: I) -> Self {
         let mut v = Vec::new();
 
         for item in iter {

@@ -22,6 +22,9 @@ pub mod thing_set;
 pub mod thingtag;
 pub mod thingtag_set;
 
+pub mod entities;
+pub mod services;
+
 pub use markdown::Markdown;
 use package::core::PackageError;
 use store::StoreError;

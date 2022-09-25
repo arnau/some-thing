@@ -1,4 +1,4 @@
-use crate::{tag::TagId, thing::ThingId, thingtag::Thingtag, Result};
+use crate::{tag, thing, thingtag::Thingtag, Result};
 
 use super::{params, Connection, Repository};
 
@@ -8,7 +8,7 @@ pub struct ThingtagStore;
 // TODO: An aux table is not really a repository.
 impl<'a> Repository<'a> for ThingtagStore {
     type Entity = Thingtag;
-    type EntityId = (ThingId, TagId);
+    type EntityId = (thing::Id, tag::Id);
     type Conn = &'a Connection;
 
     fn get(_conn: Self::Conn, _entity_id: &Self::EntityId) -> Result<Option<Self::Entity>> {

@@ -2,22 +2,22 @@ use std::fmt;
 use std::io::prelude::*;
 use std::iter::FromIterator;
 
-use crate::thing::{Thing, ThingError};
+use crate::thing::{self, ThingError};
 
 /// An iterable set of things.
 #[derive(Debug, Clone)]
-pub struct ThingSet(Vec<Thing>);
+pub struct ThingSet(Vec<thing::Record>);
 
 impl ThingSet {
-    pub fn new(raw: Vec<Thing>) -> Self {
+    pub fn new(raw: Vec<thing::Record>) -> Self {
         Self(raw)
     }
 
-    pub fn as_slice(&self) -> &[Thing] {
+    pub fn as_slice(&self) -> &[thing::Record] {
         self.0.as_slice()
     }
 
-    pub fn to_vec(&self) -> Vec<Thing> {
+    pub fn to_vec(&self) -> Vec<thing::Record> {
         self.0.clone()
     }
 
@@ -25,7 +25,7 @@ impl ThingSet {
         self.0.len()
     }
 
-    pub fn first(&self) -> Option<&Thing> {
+    pub fn first(&self) -> Option<&thing::Record> {
         self.0.first()
     }
 
@@ -35,7 +35,7 @@ impl ThingSet {
         let mut set = Vec::new();
 
         for result in rdr.deserialize() {
-            let record: Thing = result?;
+            let record: thing::Record = result?;
 
             set.push(record);
         }
@@ -47,7 +47,7 @@ impl ThingSet {
 }
 
 impl IntoIterator for ThingSet {
-    type Item = Thing;
+    type Item = thing::Record;
     type IntoIter = std::vec::IntoIter<Self::Item>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -55,8 +55,8 @@ impl IntoIterator for ThingSet {
     }
 }
 
-impl FromIterator<Thing> for ThingSet {
-    fn from_iter<I: IntoIterator<Item = Thing>>(iter: I) -> Self {
+impl FromIterator<thing::Record> for ThingSet {
+    fn from_iter<I: IntoIterator<Item = thing::Record>>(iter: I) -> Self {
         let mut v = Vec::new();
 
         for item in iter {

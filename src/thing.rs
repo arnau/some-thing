@@ -2,21 +2,32 @@ use serde::{Deserialize, Serialize};
 use std::{fmt, io};
 use thiserror::Error;
 
-use crate::tag::TagId;
+use crate::tag;
 
-pub type ThingId = String;
+pub type Id = String;
 
+/// Represents a self contained thing.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub struct Thing {
-    url: ThingId,
+    #[serde(rename = "id")]
+    pub url: Id,
+    pub name: String,
+    pub summary: Option<String>,
+    pub category: tag::Id,
+    pub tags: Vec<tag::Id>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub struct Record {
+    url: Id,
     name: String,
     #[serde(with = "empty_string")]
     summary: Option<String>,
-    category_id: TagId,
+    category_id: tag::Id,
 }
 
-impl Thing {
-    pub fn new(url: ThingId, name: String, summary: Option<String>, category_id: TagId) -> Self {
+impl Record {
+    pub fn new(url: Id, name: String, summary: Option<String>, category_id: tag::Id) -> Self {
         Self {
             url,
             name,
@@ -37,12 +48,12 @@ impl Thing {
         self.summary.clone()
     }
 
-    pub fn category_id(&self) -> &TagId {
+    pub fn category_id(&self) -> &tag::Id {
         &self.category_id
     }
 }
 
-impl fmt::Display for Thing {
+impl fmt::Display for Record {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.name)
     }
@@ -85,6 +96,8 @@ mod empty_string {
 
 #[derive(Error, Debug)]
 pub enum ThingError {
+    #[error("A thing exists with the URL '{0}'")]
+    Duplicate(String),
     #[error("'url' is a required field")]
     MissingUrl,
     #[error("'name' is a required field")]

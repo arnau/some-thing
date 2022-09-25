@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::io;
 use thiserror::Error;
 
-use crate::tag::TagId;
+use crate::tag;
 
 /// A relation between a [`Thing`] and a [`Tag`].
 ///
@@ -11,11 +11,11 @@ use crate::tag::TagId;
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Thingtag {
     thing_id: String,
-    tag_id: TagId,
+    tag_id: tag::Id,
 }
 
 impl Thingtag {
-    pub fn new(thing_id: String, tag_id: TagId) -> Self {
+    pub fn new(thing_id: String, tag_id: tag::Id) -> Self {
         Self { thing_id, tag_id }
     }
 
@@ -23,7 +23,7 @@ impl Thingtag {
         &self.thing_id
     }
 
-    pub fn tag_id(&self) -> &TagId {
+    pub fn tag_id(&self) -> &tag::Id {
         &self.tag_id
     }
 }

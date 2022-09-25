@@ -1,13 +1,15 @@
-use crate::{Result, tag::{Tag, TagId}};
+use std::ops::Deref;
 
-use super::{Repository, Connection, params};
+use crate::{tag, Result};
+
+use super::{params, Connection, Repository};
 
 #[derive(Debug)]
 pub struct TagStore;
 
 impl<'a> Repository<'a> for TagStore {
-    type Entity = Tag;
-    type EntityId = TagId;
+    type Entity = tag::Record;
+    type EntityId = tag::Id;
     type Conn = &'a Connection;
 
     fn get(conn: Self::Conn, entity_id: &Self::EntityId) -> Result<Option<Self::Entity>> {
@@ -24,11 +26,11 @@ impl<'a> Repository<'a> for TagStore {
 
         let mut stmt = conn.prepare(query)?;
         let mut rows = stmt.query_map([entity_id], |row| {
-            let id: TagId = row.get(0)?;
+            let id: tag::Id = row.get(0)?;
             let name: Option<String> = row.get(1)?;
             let summary: Option<String> = row.get(2)?;
 
-            Ok(Tag::new(id, name, summary))
+            Ok(tag::Record::new(id, name, summary))
         })?;
 
         match rows.next() {
@@ -49,11 +51,11 @@ impl<'a> Repository<'a> for TagStore {
 
         let mut stmt = conn.prepare(query)?;
         let rows = stmt.query_map([], |row| {
-            let id: TagId = row.get(0)?;
+            let id: tag::Id = row.get(0)?;
             let name: Option<String> = row.get(1)?;
             let summary: Option<String> = row.get(2)?;
 
-            Ok(Tag::new(id, name, summary))
+            Ok(tag::Record::new(id, name, summary))
         })?;
         let mut items = Vec::new();
 
@@ -85,11 +87,7 @@ impl<'a> Repository<'a> for TagStore {
     }
 
     fn add(conn: Self::Conn, entity: &Self::Entity) -> Result<()> {
-        let record = params![
-            entity.id(),
-            entity.name(),
-            entity.summary(),
-        ];
+        let record = params![entity.id(), entity.name(), entity.summary(),];
 
         let mut stmt = conn.prepare(
             r#"
@@ -132,11 +130,7 @@ impl<'a> Repository<'a> for TagStore {
     }
 
     fn replace(conn: Self::Conn, entity: &Self::Entity) -> Result<()> {
-        let record = params![
-            entity.id(),
-            entity.name(),
-            entity.summary(),
-        ];
+        let record = params![entity.id(), entity.name(), entity.summary(),];
 
         let mut stmt = conn.prepare(
             r#"
@@ -149,8 +143,86 @@ impl<'a> Repository<'a> for TagStore {
 
         stmt.execute(record)?;
 
-
-
         Ok(())
+    }
+}
+
+impl TagStore {
+    pub fn list<Conn>(conn: Conn) -> Result<Vec<tag::Record>>
+    where
+        Conn: Deref<Target = Connection>,
+    {
+        TagStore::to_vec(&conn)
+    }
+
+    pub fn list_without<Conn>(conn: Conn, ids: &[tag::Id]) -> Result<Vec<tag::Record>>
+    where
+        Conn: Deref<Target = Connection>,
+    {
+        let query = format!(
+            r#"
+            SELECT
+                id,
+                name,
+                summary
+            FROM
+                tag
+            WHERE
+                id NOT IN ({})
+            "#,
+            ids.iter()
+                .map(|x| format!("'{}'", x))
+                .collect::<Vec<String>>()
+                .join(",")
+        );
+
+        let mut stmt = conn.prepare(&query)?;
+        let rows = stmt.query_map([], |row| {
+            let id: tag::Id = row.get(0)?;
+            let name: Option<String> = row.get(1)?;
+            let summary: Option<String> = row.get(2)?;
+
+            Ok(tag::Record::new(id, name, summary))
+        })?;
+        let mut items = Vec::new();
+
+        for row in rows {
+            items.push(row?);
+        }
+
+        Ok(items)
+    }
+
+    pub fn list_categories<Conn>(conn: Conn) -> Result<Vec<tag::Record>>
+    where
+        Conn: Deref<Target = Connection>,
+    {
+        let query = r#"
+            SELECT DISTINCT
+                tag.id,
+                tag.name,
+                tag.summary
+            FROM
+                source.thing AS thing
+            LEFT JOIN
+                source.tag AS tag ON thing.category_id = tag.id
+            ORDER BY tag.id ASC
+        "#;
+
+        let mut stmt = conn.prepare(&query)?;
+        let rows = stmt.query_map([], |row| {
+            let id: tag::Id = row.get(0)?;
+            let name: Option<String> = row.get(1)?;
+            let summary: Option<String> = row.get(2)?;
+
+            Ok(tag::Record::new(id, name, summary))
+        })?;
+        let mut items = Vec::new();
+
+        for row in rows {
+            items.push(row?);
+        }
+
+        Ok(items)
     }
 }

@@ -1,14 +1,16 @@
-use super::{Connection, Repository, params};
-use crate::tag::TagId;
-use crate::thing::{Thing, ThingId};
+use std::ops::Deref;
+
+use super::{params, Connection, Repository};
+use crate::tag;
+use crate::thing;
 use crate::Result;
 
 #[derive(Debug)]
 pub struct ThingStore;
 
 impl<'a> Repository<'a> for ThingStore {
-    type Entity = Thing;
-    type EntityId = ThingId;
+    type Entity = thing::Record;
+    type EntityId = thing::Id;
     type Conn = &'a Connection;
 
     fn get(conn: Self::Conn, entity_id: &Self::EntityId) -> Result<Option<Self::Entity>> {
@@ -26,12 +28,12 @@ impl<'a> Repository<'a> for ThingStore {
 
         let mut stmt = conn.prepare(query)?;
         let mut rows = stmt.query_map([entity_id], |row| {
-            let url: ThingId = row.get(0)?;
+            let url: Self::EntityId = row.get(0)?;
             let name: String = row.get(1)?;
             let summary: Option<String> = row.get(2)?;
-            let category_id: TagId = row.get(3)?;
+            let category_id: tag::Id = row.get(3)?;
 
-            Ok(Thing::new(url, name, summary, category_id))
+            Ok(Self::Entity::new(url, name, summary, category_id))
         })?;
 
         match rows.next() {
@@ -53,12 +55,12 @@ impl<'a> Repository<'a> for ThingStore {
 
         let mut stmt = conn.prepare(query)?;
         let rows = stmt.query_map([], |row| {
-            let url: ThingId = row.get(0)?;
+            let url: Self::EntityId = row.get(0)?;
             let name: String = row.get(1)?;
             let summary: Option<String> = row.get(2)?;
-            let category_id: TagId = row.get(3)?;
+            let category_id: tag::Id = row.get(3)?;
 
-            Ok(Thing::new(url, name, summary, category_id))
+            Ok(Self::Entity::new(url, name, summary, category_id))
         })?;
         let mut items = Vec::new();
 
@@ -158,4 +160,71 @@ impl<'a> Repository<'a> for ThingStore {
 
         Ok(())
     }
+}
+
+impl ThingStore {
+    pub fn list_categorised<Conn>(conn: Conn, category_id: &tag::Id) -> Result<Vec<thing::Thing>>
+    where
+        Conn: Deref<Target = Connection>,
+    {
+        let query = r#"
+            SELECT
+                url,
+                name,
+                summary,
+                category_id
+            FROM
+                thing
+            WHERE
+                category_id = $1
+            "#;
+
+        let mut stmt = conn.prepare(query)?;
+        let rows = stmt.query_map([category_id], |row| {
+            let url: thing::Id = row.get(0)?;
+            let name: String = row.get(1)?;
+            let summary: Option<String> = row.get(2)?;
+            let category: tag::Id = row.get(3)?;
+            // TODO: propagate error rather than excepting.
+            let tags = tags_for(&conn, &url).expect("Failed to fetch tags.");
+
+            Ok(thing::Thing {url, name, summary, category, tags})
+        })?;
+        let mut items = Vec::new();
+
+        for row in rows {
+            items.push(row?);
+        }
+
+        Ok(items)
+    }
+}
+
+fn tags_for<Conn>(conn: &Conn, thing_id: &thing::Id) -> Result<Vec<tag::Id>>
+where
+    Conn: Deref<Target = Connection>,
+{
+    let query = r#"
+        SELECT
+            tag_id
+        FROM
+            source.thing_tag
+        WHERE
+            thing_id = $1
+        ORDER BY tag_id
+    "#;
+
+    let mut stmt = conn.prepare(query)?;
+    let rows = stmt.query_map([thing_id], |row| {
+        let id: String = row.get(0)?;
+
+        Ok(id)
+    })?;
+    let mut items = Vec::new();
+
+    for row in rows {
+        items.push(row?);
+    }
+
+    Ok(items)
 }
