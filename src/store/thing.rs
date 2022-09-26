@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
 use super::{params, Connection, Repository};
-use crate::tag;
-use crate::thing;
+use crate::entities::tag;
+use crate::entities::thing;
 use crate::Result;
 
 #[derive(Debug)]

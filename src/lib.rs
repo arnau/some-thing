@@ -15,22 +15,17 @@ pub mod lenses;
 pub mod markdown;
 pub mod package;
 pub mod store;
-pub mod tag;
-pub mod tag_set;
-pub mod thing;
-pub mod thing_set;
-pub mod thingtag;
-pub mod thingtag_set;
 
 pub mod entities;
 pub mod services;
 
 pub use markdown::Markdown;
+
 use package::core::PackageError;
 use store::StoreError;
-use tag::TagError;
-use thing::ThingError;
-use thingtag::ThingtagError;
+use entities::tag::TagError;
+use entities::thing::ThingError;
+use entities::thingtag::ThingtagError;
 
 pub type Result<T> = std::result::Result<T, SomeError>;
 

@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{tag, thing};
+use crate::entities::{tag, thing};
 
 #[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Event {

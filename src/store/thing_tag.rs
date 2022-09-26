@@ -1,6 +1,6 @@
-use crate::{tag, thing, thingtag::Thingtag, Result};
-
 use super::{params, Connection, Repository};
+use crate::entities::{tag, thing, thingtag::Thingtag};
+use crate::Result;
 
 #[derive(Debug)]
 pub struct ThingtagStore;

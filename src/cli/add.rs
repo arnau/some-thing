@@ -7,7 +7,7 @@ use crate::entities::change::Data;
 use crate::lenses;
 use crate::services::staging;
 use crate::store::{Repository, TagStore, ThingStore};
-use crate::tag_set::TagSet;
+use crate::entities::tag_set::TagSet;
 use crate::{Report, Result};
 
 /// Adds a new item to the collection.

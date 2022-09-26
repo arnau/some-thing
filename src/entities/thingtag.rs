@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::io;
 use thiserror::Error;
 
-use crate::tag;
+use crate::entities::tag;
 
 /// A relation between a [`Thing`] and a [`Tag`].
 ///

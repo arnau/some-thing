@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{fmt, io};
 use thiserror::Error;
 
-use crate::tag;
+use crate::entities::tag;
 
 pub type Id = String;
 

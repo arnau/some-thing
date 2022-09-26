@@ -1,6 +1,6 @@
 use std::ops::Deref;
 
-use crate::{tag, Result};
+use crate::{entities::tag, Result};
 
 use super::{params, Connection, Repository};
 

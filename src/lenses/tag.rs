@@ -1,7 +1,7 @@
 use skim::prelude::*;
 
-use crate::tag;
-use crate::tag_set::TagSet;
+use crate::entities::tag;
+use crate::entities::tag_set::TagSet;
 
 /// The full set of tags in the store.
 // pub fn full_set(store: &mut Store) -> Result<TagSet> {

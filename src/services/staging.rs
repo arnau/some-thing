@@ -4,8 +4,8 @@ use crate::{
     context::Context,
     entities::change::{Change, Data},
     store::{ChangeStore, Connection, Repository, TagStore, ThingStore},
-    tag::{self, TagError},
-    thing::{self, ThingError},
+    entities::tag::{self, TagError},
+    entities::thing::{self, ThingError},
     Result, SomeError,
 };
 use std::{io::Write, ops::Deref};

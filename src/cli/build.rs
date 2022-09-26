@@ -5,8 +5,8 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 use crate::context::Context;
-use crate::store::{Strategy, TagStore, ThingStore, DEFAULT_PATH};
-use crate::thing;
+use crate::store::{TagStore, ThingStore};
+use crate::entities::thing;
 use crate::{Report, Result};
 
 /// Builds the Markdown version of the collection.
