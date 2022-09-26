@@ -5,7 +5,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 name = "some-thing"
 repository = "https://github.com/arnau/some-thing"
-version = "0.2.1"
+version = "0.3.0"
 
 [[bin]]
 path = "src/main.rs"
@@ -23,7 +23,6 @@ chrono = { version = "0.4", features = ["serde"] }
 clap = { version = "3.2", features = ["derive"] }
 csv = "1.1"
 directories = "4.0"
-itertools = "0.10"
 pulldown-cmark = { version = "0.9", default-features = false }
 reqwest = { version = "0.11", features = ["json", "blocking"] }
 rusqlite = { version = "0.28", features = ["bundled", "csvtab"] }

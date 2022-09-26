@@ -979,15 +979,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "879d54834c8c76457ef4293a689b2a8c59b076067ad77b15efafbb05f92a592b"
 
 [[package]]
-name = "itertools"
-version = "0.10.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d8bf247779e67a9082a4790b45e71ac7cfd1321331a5c856a74a9faebdab78d0"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1998,7 +1989,7 @@ dependencies = [
 
 [[package]]
 name = "some-thing"
-version = "0.2.1"
+version = "0.3.0"
 dependencies = [
  "ansi_term",
  "anyhow",
@@ -2006,7 +1997,6 @@ dependencies = [
  "clap 3.2.22",
  "csv",
  "directories",
- "itertools",
  "pulldown-cmark",
  "reqwest",
  "rusqlite",
