@@ -17,14 +17,14 @@ use thiserror::Error;
 
 use crate::Result;
 
+mod change;
 mod tag;
 mod thing;
 mod thing_tag;
-mod change;
+pub use change::ChangeStore;
 pub use tag::TagStore;
 pub use thing::ThingStore;
 pub use thing_tag::ThingtagStore;
-pub use change::ChangeStore;
 
 pub const DEFAULT_PATH: &str = ":memory:";
 
@@ -218,6 +218,12 @@ impl Store {
         F: FnMut(&Row<'_>) -> std::result::Result<T, rusqlite::Error>,
     {
         let mut stmt = self.conn.prepare(query)?;
+
+        let column_names = stmt
+            .column_names()
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<String>>();
 
         let rows = stmt.query_map(params, f)?;
 

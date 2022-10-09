@@ -10,6 +10,7 @@ enum Subcommand {
     Add(cli::add::Cmd),
     Build(cli::build::Cmd),
     Destroy(cli::destroy::Cmd),
+    Shell(cli::shell::Cmd),
 }
 
 #[derive(Debug, Parser)]
@@ -51,6 +52,12 @@ fn main() {
             Ok(msg) => {
                 println!("{}", msg);
             }
+            Err(err) => {
+                eprintln!("{:?}", err);
+            }
+        },
+        Subcommand::Shell(cmd) => match cmd.run() {
+            Ok(_) => {}
             Err(err) => {
                 eprintln!("{:?}", err);
             }

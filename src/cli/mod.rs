@@ -8,6 +8,7 @@ pub mod add;
 pub mod build;
 pub mod destroy;
 pub mod init;
+pub mod shell;
 
 use crate::{Result, SomeError};
 

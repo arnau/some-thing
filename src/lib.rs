@@ -15,6 +15,7 @@ pub mod lenses;
 pub mod markdown;
 pub mod package;
 pub mod store;
+pub mod shell;
 
 pub mod entities;
 pub mod services;
@@ -90,6 +91,8 @@ pub enum SomeError {
     MissingPackageDescriptor(String),
 
     // External
+    #[error("{0}")]
+    Lazy(#[from] anyhow::Error),
     #[error("date error")]
     Date(#[from] ChronoError),
     #[error("url error")]
